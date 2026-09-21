@@ -1,0 +1,18 @@
+.employees-container {
+  width: 500px;
+  margin: 40px auto;
+}
+
+.employee-card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin: 10px 0;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background-color: red;
+  color: white;
+  border: none;
+}
