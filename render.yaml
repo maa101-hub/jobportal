@@ -1,4 +1,4 @@
-# Render Blueprint for the Job Portal backend (Spring Boot monolith + PostgreSQL)
+# Render Blueprint for the Job Portal (Spring Boot monolith + PostgreSQL + React frontend)
 # Docs: https://render.com/docs/blueprint-spec
 databases:
   - name: jobportal-db
@@ -7,6 +7,7 @@ databases:
     plan: free
 
 services:
+  # ── Backend: Spring Boot monolith (Docker) ──────────────────────────────
   - type: web
     name: jobportal-backend
     runtime: docker
@@ -14,7 +15,7 @@ services:
     # Build the Docker image from the monolith module
     rootDir: backned/monolith
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /
+    healthCheckPath: /actuator/health
     envVars:
       # Spring reads SPRING_DATASOURCE_URL; build the JDBC URL from the
       # managed Postgres connection properties.
@@ -30,3 +31,24 @@ services:
         fromDatabase:
           name: jobportal-db
           property: password
+
+  # ── Frontend: React + Vite static site ──────────────────────────────────
+  - type: web
+    name: jobportal-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    # Point the SPA at the deployed backend's public URL.
+    # sync:false means Render prompts you to paste the value at deploy time —
+    # set it to the backend's full URL, e.g. https://jobportal-backend.onrender.com
+    # (Vite bakes this in at build time, so it must be the full https:// origin,
+    # not a scheme-less host, which is why it isn't auto-wired from the service.)
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+    # SPA fallback: serve index.html for client-side routes.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
