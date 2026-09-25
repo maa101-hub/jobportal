@@ -1,0 +1,39 @@
+# Render Blueprint for the Job Portal backend (Spring Boot monolith + PostgreSQL)
+# The React frontend is deployed separately on Vercel.
+# Docs: https://render.com/docs/blueprint-spec
+databases:
+  - name: jobportal-db
+    databaseName: hiringapplication
+    user: jobportal
+    plan: free
+
+services:
+  # ── Backend: Spring Boot monolith (Docker) ──────────────────────────────
+  - type: web
+    name: jobportal-backend
+    runtime: docker
+    plan: free
+    # Build the Docker image from the monolith module
+    rootDir: backned/monolith
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      # Spring reads SPRING_DATASOURCE_URL; build the JDBC URL from the
+      # managed Postgres connection properties.
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: jobportal-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: jobportal-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: jobportal-db
+          property: password
+      # Comma-separated frontend origins allowed by CORS. Update this to your
+      # Vercel domain(s). Supports wildcards, e.g. https://*.vercel.app for
+      # preview deployments.
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://jobportal-theta-one.vercel.app,https://*.vercel.app
