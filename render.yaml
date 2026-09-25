@@ -20,6 +20,14 @@ services:
     envVars:
       # Spring reads SPRING_DATASOURCE_URL; build the JDBC URL from the
       # managed Postgres connection properties.
+      #
+      # If you use an EXTERNAL Postgres (e.g. Neon), remove the three
+      # fromDatabase entries below and the `databases:` block above, then set
+      # these manually in the Render dashboard:
+      #   SPRING_DATASOURCE_URL = postgresql://user:pass@host/db?sslmode=require
+      #   DB_USERNAME           = <db user>
+      #   DB_PASSWORD           = <db password>
+      # The app converts postgresql:// URLs to JDBC and keeps ?sslmode=require.
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: jobportal-db

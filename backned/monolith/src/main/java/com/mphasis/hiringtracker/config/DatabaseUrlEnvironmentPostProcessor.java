@@ -14,12 +14,15 @@ import org.springframework.util.StringUtils;
  * Normalizes a Render/Heroku-style PostgreSQL connection string into the
  * JDBC form Spring Boot expects.
  *
- * <p>Render's managed Postgres exposes its connection string as
- * {@code postgres://user:password@host:port/dbname} (also surfaced via the
- * {@code DATABASE_URL} env var). That URI is <em>not</em> a valid JDBC URL, so
- * this post processor rewrites it to
- * {@code jdbc:postgresql://host:port/dbname} and splits out the username and
- * password into {@code spring.datasource.username} / {@code .password}.
+ * <p>Managed providers (Render, Neon, Heroku, Supabase, ...) expose their
+ * connection string as
+ * {@code postgres://user:password@host:port/dbname?sslmode=require} (also
+ * surfaced via the {@code DATABASE_URL} env var). That URI is <em>not</em> a
+ * valid JDBC URL, so this post processor rewrites it to
+ * {@code jdbc:postgresql://host:port/dbname?sslmode=require} and splits out the
+ * username and password into {@code spring.datasource.username} /
+ * {@code .password}. Query parameters such as {@code sslmode} are preserved,
+ * which providers like Neon require.
  *
  * <p>It looks at {@code SPRING_DATASOURCE_URL} first, then {@code DATABASE_URL}.
  * If the value is already a {@code jdbc:} URL it is left untouched, so local
@@ -46,7 +49,12 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         Map<String, Object> props = new HashMap<>();
 
         int port = uri.getPort() == -1 ? 5432 : uri.getPort();
-        String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s", uri.getHost(), port, uri.getPath());
+        // Preserve query params (e.g. ?sslmode=require) — required by Neon/Supabase.
+        // Drop channel_binding, which the PostgreSQL JDBC driver does not accept
+        // as a URL parameter (it is a libpq/psql option, not a JDBC one).
+        String query = sanitizeQuery(uri.getRawQuery());
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s%s",
+                uri.getHost(), port, uri.getPath(), query);
         props.put("spring.datasource.url", jdbcUrl);
 
         String userInfo = uri.getUserInfo();
@@ -61,6 +69,26 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         // Highest precedence so it overrides the placeholder defaults.
         environment.getPropertySources()
                 .addFirst(new MapPropertySource("renderDatabaseUrl", props));
+    }
+
+    /**
+     * Rebuilds the query string, dropping parameters the PostgreSQL JDBC driver
+     * does not understand (notably {@code channel_binding}, which is a
+     * libpq-only option). Returns "" or "?key=value&...".
+     */
+    private static String sanitizeQuery(String rawQuery) {
+        if (!StringUtils.hasText(rawQuery)) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String pair : rawQuery.split("&")) {
+            String key = pair.split("=", 2)[0];
+            if ("channel_binding".equalsIgnoreCase(key)) {
+                continue;
+            }
+            sb.append(sb.length() == 0 ? "?" : "&").append(pair);
+        }
+        return sb.toString();
     }
 
     private static String firstNonBlank(String... values) {
