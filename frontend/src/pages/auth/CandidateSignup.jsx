@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import "./auth.css";
 import "./CandidateSignup.css";
 
 import { candidateSignup } from "../../services/endpoints";
+import { useToast } from "../../components/Toast/ToastContext";
 
 function CandidateSignup() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,46 +25,90 @@ function CandidateSignup() {
 
     try {
       const res = await candidateSignup(data);
-      alert(res.data);
-
-      if (res.data === "Candidate Registered Successfully") {
-        navigate("/");
+      const msg = typeof res.data === "string" ? res.data : "Account created";
+      if (/success|registered/i.test(msg)) {
+        toast.success("Account created — please sign in.");
+        setTimeout(() => navigate("/login"), 700);
+      } else {
+        toast.error(msg);
       }
-
     } catch (err) {
       console.log(err);
-      alert("Signup failed");
+      toast.error("Signup failed. That email may already be registered.");
     }
   };
 
   return (
-    <div className="signup-container">
-      <h2>Candidate Signup</h2>
+    <div className="auth-shell">
+      <aside className="auth-aside">
+        <div className="auth-brand">HireTrack</div>
 
-      <form onSubmit={handleSignup}>
-        <input
-          type="text"
-          placeholder="Enter Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="auth-hero">
+          <h1>Find your next role.</h1>
+          <p>
+            Create a candidate profile, apply in a click, and follow every
+            application through to the offer.
+          </p>
+        </div>
 
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <ul className="auth-points">
+          <li>Browse open roles across companies</li>
+          <li>Track application and interview status</li>
+          <li>Review and accept offers</li>
+        </ul>
+      </aside>
 
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+      <main className="auth-main">
+        <div className="auth-card">
+          <span className="auth-eyebrow is-candidate">Candidate</span>
+          <h2>Create your account</h2>
+          <p className="auth-sub">A minute to set up. Then start applying.</p>
 
-        <button type="submit">Signup</button>
-      </form>
+          <form className="auth-form" onSubmit={handleSignup}>
+            <div className="auth-field">
+              <label htmlFor="cand-name">Full name</label>
+              <input
+                id="cand-name"
+                type="text"
+                placeholder="Jordan Rivera"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="cand-email">Email</label>
+              <input
+                id="cand-email"
+                type="email"
+                placeholder="you@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="cand-password">Password</label>
+              <input
+                id="cand-password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+
+            <button type="submit">Create account</button>
+          </form>
+
+          <p className="auth-footnote">
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,216 +1,176 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { acceptOfferById, getOfferByApplication, getUserApplications, rejectOfferById } from "../../services/endpoints";
+import { normalizeList, formatDate, humanize } from "../../utils/helpers";
+import { useToast } from "../../components/Toast/ToastContext";
+import ConfirmDialog from "../../components/Toast/ConfirmDialog";
 import "./CandidateOffers.css";
 
+const statusTone = (status) => {
+	const s = String(status || "").toUpperCase();
+	if (s === "JOINED") return "green";
+	if (s === "ACCEPTED") return "teal";
+	if (["OFFER_RELEASED", "OFFERED"].includes(s)) return "brand";
+	return "slate";
+};
+
 function CandidateOffers() {
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [userId] = useState(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
-    const mappedUserId = user?.id ?? user?.userId ?? localStorage.getItem("userId");
-    return mappedUserId ? Number(mappedUserId) : null;
-  });
+	const navigate = useNavigate();
+	const toast = useToast();
+	const [offers, setOffers] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [acting, setActing] = useState(null);
+	const [pendingDecline, setPendingDecline] = useState(null); // offerId
 
-  const fetchOffers = useCallback(async () => {
-    if (!userId) {
-      setError("User ID not found. Please login again.");
-      setLoading(false);
-      return;
-    }
+	const userId = (() => {
+		const user = JSON.parse(localStorage.getItem("user") || "null");
+		const raw = user?.id ?? user?.userId ?? localStorage.getItem("userId");
+		return raw ? Number(raw) : null;
+	})();
 
-    try {
-      console.log(`📡 Fetching offers for userId: ${userId}`);
+	const fetchOffers = useCallback(async () => {
+		if (!userId) {
+			setLoading(false);
+			return;
+		}
+		setLoading(true);
+		try {
+			const apps = normalizeList((await getUserApplications(userId)).data);
+			const resolved = await Promise.all(
+				apps.map(async (application) => {
+					try {
+						const r = await getOfferByApplication(application.id);
+						const offer = r?.data?.data ?? r?.data ?? r;
+						return { application, offer };
+					} catch {
+						return null;
+					}
+				})
+			);
+			setOffers(
+				resolved.filter(
+					(x) => x?.offer && ["OFFER_RELEASED", "ACCEPTED", "JOINED"].includes(String(x.offer.status || "").toUpperCase())
+				)
+			);
+		} catch (err) {
+			console.log(err);
+			setOffers([]);
+		} finally {
+			setLoading(false);
+		}
+	}, [userId]);
 
-      const { data } = await getUserApplications(userId);
-      const applications = Array.isArray(data) ? data : data.data || [];
-      
-      const resolvedOffers = await Promise.all(
-        applications.map(async (application) => {
-          try {
-            const offerResponse = await getOfferByApplication(application.id);
-            const offer = offerResponse?.data?.data ?? offerResponse?.data ?? offerResponse;
-            return { application, offer };
-          } catch {
-            return null;
-          }
-        })
-      );
+	useEffect(() => {
+		const t = setTimeout(() => void fetchOffers(), 0);
+		return () => clearTimeout(t);
+	}, [fetchOffers]);
 
-      const filteredOffers = resolvedOffers.filter(
-        (item) => item?.offer && ["OFFER_RELEASED", "ACCEPTED", "JOINED"].includes(String(item.offer.status || "").toUpperCase())
-      );
+	const accept = async (offerId) => {
+		setActing(offerId);
+		try {
+			await acceptOfferById(offerId);
+			toast.success("Offer accepted! The company will confirm your joining details.");
+			await fetchOffers();
+		} catch (err) {
+			console.log(err);
+			toast.error("Couldn't accept the offer.");
+		} finally {
+			setActing(null);
+		}
+	};
 
-      console.log("✅ Offered applications:", filteredOffers);
-      setOffers(filteredOffers);
+	const confirmDecline = async () => {
+		const offerId = pendingDecline;
+		setPendingDecline(null);
+		setActing(offerId);
+		try {
+			await rejectOfferById(offerId);
+			toast.info("Offer declined.");
+			await fetchOffers();
+		} catch (err) {
+			console.log(err);
+			toast.error("Couldn't decline the offer.");
+		} finally {
+			setActing(null);
+		}
+	};
 
-      if (filteredOffers.length === 0) {
-        setError("No pending offers");
-      }
-    } catch (err) {
-      console.error("❌ Error fetching offers:", err);
-      setError(`Error loading offers: ${err.message}`);
-      setOffers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
+	return (
+		<div className="ht-page myoffers-page">
+			<header className="ht-page-head">
+				<div>
+					<h2>My Offers</h2>
+					<p>Review and respond to the offers you've received.</p>
+				</div>
+				<div className="ht-page-actions">
+					<span className="myoffers-count">{offers.length} offer{offers.length === 1 ? "" : "s"}</span>
+				</div>
+			</header>
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetchOffers();
-    }, 0);
+			{loading ? (
+				<div className="myoffers-skeleton">
+					{[0, 1].map((i) => <div key={i} className="myoffers-skel" style={{ "--i": i }} />)}
+				</div>
+			) : offers.length === 0 ? (
+				<div className="ht-empty">
+					<div className="ht-empty-mark" aria-hidden="true" />
+					<h3>No offers yet</h3>
+					<p>Keep applying — offers will appear here as you clear interview rounds.</p>
+					<button style={{ marginTop: "1rem" }} onClick={() => navigate("/jobs")}>Browse Jobs</button>
+				</div>
+			) : (
+				<div className="myoffers-grid">
+					{offers.map(({ application, offer }) => {
+						const status = String(offer?.status || "").toUpperCase();
+						const isReleased = status === "OFFER_RELEASED";
+						return (
+							<article key={application.id} className="myoffer-card">
+								<div className="myoffer-top">
+									<div>
+										<span className="myoffer-appid">Application #{application.id}</span>
+										<h3>Job #{application.jobId}</h3>
+									</div>
+									<span className={`ht-pill tone-${statusTone(status)}`}>{humanize(offer?.status || "Offer")}</span>
+								</div>
 
-    return () => clearTimeout(timer);
-  }, [fetchOffers]);
+								<div className="myoffer-facts">
+									<div><span>Applied</span><strong>{formatDate(application.appliedAt)}</strong></div>
+									<div><span>Offer date</span><strong>{formatDate(offer?.offerDate)}</strong></div>
+									<div><span>Joining</span><strong>{formatDate(offer?.joiningDate)}</strong></div>
+								</div>
 
-  const handleAcceptOffer = async (offerId) => {
-    try {
-      console.log("📡 Accepting offer:", offerId);
+								<div className={`myoffer-note tone-${statusTone(status)}`}>
+									{status === "JOINED" ? "You're marked as joined. Welcome onboard! 🎉"
+										: status === "ACCEPTED" ? "Offer accepted — awaiting joining confirmation."
+											: "Congratulations! Review and respond to your offer."}
+								</div>
 
-      await acceptOfferById(offerId);
-      
-      alert("✅ Offer Accepted! Company will contact you with joining details.");
-      await fetchOffers();
-    } catch (err) {
-      console.error("❌ Error accepting offer:", err);
-      alert("Failed to accept offer: " + err.message);
-    }
-  };
+								{isReleased && (
+									<div className="myoffer-actions">
+										<button className="ht-btn-success" onClick={() => accept(offer.id)} disabled={acting === offer.id || !offer?.id}>
+											{acting === offer.id ? "…" : "Accept"}
+										</button>
+										<button className="ht-btn-danger" onClick={() => setPendingDecline(offer.id)} disabled={acting === offer.id || !offer?.id}>
+											Decline
+										</button>
+									</div>
+								)}
+							</article>
+						);
+					})}
+				</div>
+			)}
 
-  const handleRejectOffer = async (offerId) => {
-    if (!window.confirm("Are you sure you want to decline this offer?")) {
-      return;
-    }
-
-    try {
-      await rejectOfferById(offerId);
-      alert("Offer declined");
-      await fetchOffers();
-    } catch (err) {
-      console.error("❌ Error declining offer:", err);
-      alert("Failed to decline offer: " + err.message);
-    }
-  };
-
-  return (
-    <div className="offers-container">
-      <div className="offers-header">
-        <div>
-          <h2>💼 My Job Offers</h2>
-          <p>Review and respond to job offers from companies</p>
-        </div>
-        <div className="offers-count-card">
-          <span>Total Offers</span>
-          <strong>{offers.length}</strong>
-        </div>
-      </div>
-
-      {/* Debug Info */}
-      <div className="debug-info">
-        <p><strong>User ID:</strong> {userId || "Not found"}</p>
-        <p><strong>Loading:</strong> {loading ? "Yes" : "No"}</p>
-      </div>
-
-      {/* Error Message */}
-      {error && !loading && offers.length === 0 && (
-        <div className="error-message">
-          <p>⚠️ {error}</p>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="loading-state">
-          <p>Loading your offers...</p>
-        </div>
-      )}
-
-      {/* Offers Grid */}
-      {!loading && offers.length > 0 && (
-        <div className="offers-grid">
-          {offers.map(({ application, offer }) => (
-            <div key={application.id} className="offer-card">
-              <div className="offer-header">
-                <div>
-                  <h3>Application #{application.id}</h3>
-                  <p className="job-id">Job ID: {application.jobId}</p>
-                </div>
-                <span className="offer-badge">OFFER EXTENDED</span>
-              </div>
-
-              <div className="offer-details">
-                <div className="detail-item">
-                  <span className="label">Applied On</span>
-                  <strong>{application.appliedAt ? new Date(application.appliedAt).toLocaleDateString() : "N/A"}</strong>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Current Status</span>
-                  <strong className="status-offered">{offer?.status || application.status || "N/A"}</strong>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Last Updated</span>
-                  <strong>{offer?.offerDate ? new Date(offer.offerDate).toLocaleDateString() : "N/A"}</strong>
-                </div>
-              </div>
-
-              {offer?.joiningDate && (
-                <div className="offer-message">
-                  <p>📅 Joining Date: {new Date(offer.joiningDate).toLocaleDateString()}</p>
-                </div>
-              )}
-
-              <div className="offer-message">
-                {String(offer?.status || "").toUpperCase() === "JOINED" ? (
-                  <>
-                    <p>✅ Your status is updated as JOINED.</p>
-                    <p>Welcome onboard!</p>
-                  </>
-                ) : String(offer?.status || "").toUpperCase() === "ACCEPTED" ? (
-                  <>
-                    <p>✅ Offer accepted successfully.</p>
-                    <p>Waiting for admin to confirm joining date.</p>
-                  </>
-                ) : (
-                  <>
-                    <p>🎉 Congratulations! You've received a job offer.</p>
-                    <p>Please accept or decline this offer.</p>
-                  </>
-                )}
-              </div>
-
-              {String(offer?.status || "").toUpperCase() === "OFFER_RELEASED" && (
-                <div className="offer-actions">
-                  <button
-                    className="btn-accept"
-                    onClick={() => handleAcceptOffer(offer?.id)}
-                    disabled={!offer?.id}
-                  >
-                    ✅ Accept Offer
-                  </button>
-                  <button
-                    className="btn-decline"
-                    onClick={() => handleRejectOffer(offer?.id)}
-                    disabled={!offer?.id}
-                  >
-                    ❌ Decline Offer
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && offers.length === 0 && !error && (
-        <div className="empty-state">
-          <h3>No Offers Yet</h3>
-          <p>Keep applying for jobs! Companies will send you offers as you progress through their interview rounds.</p>
-        </div>
-      )}
-    </div>
-  );
+			<ConfirmDialog
+				open={!!pendingDecline}
+				title="Decline this offer?"
+				message="This can't be undone. The company will be notified."
+				confirmLabel="Decline offer"
+				onConfirm={confirmDecline}
+				onCancel={() => setPendingDecline(null)}
+			/>
+		</div>
+	);
 }
 
 export default CandidateOffers;

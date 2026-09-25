@@ -1,119 +1,71 @@
-.create-job-page {
-  min-height: calc(100vh - 80px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 45%, #fff7ed 100%);
+.createjob-page { width: 100%; max-width: 920px; }
+
+.createjob-banner {
+	padding: 0.85rem 1.1rem;
+	border-radius: var(--radius-md);
+	font-size: var(--text-sm);
+	font-weight: 600;
+}
+.createjob-banner.success { background: var(--success-50); border: 1px solid #bbf7d0; color: var(--success-700); }
+.createjob-banner.error { background: var(--danger-50); border: 1px solid #fecaca; color: var(--danger-700); }
+
+.createjob-form { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.form-section {
+	padding: var(--space-6);
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	border: 1px solid var(--ink-200);
+	box-shadow: var(--shadow-sm);
+	animation: ht-fade-up var(--dur-3) var(--ease) both;
+}
+.form-section:nth-child(2) { animation-delay: 0.06s; }
+.form-section:nth-child(3) { animation-delay: 0.12s; }
+
+.form-section-head { margin-bottom: var(--space-5); }
+.form-section-head h3 { margin: 0 0 2px; font-size: var(--text-lg); }
+.form-section-head p { margin: 0; font-size: var(--text-sm); color: var(--ink-500); }
+
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--space-4);
+}
+.form-field { display: grid; gap: 0.4rem; }
+.form-field.span-2 { grid-column: 1 / -1; }
+.form-field label { display: flex; align-items: center; gap: 0.4rem; }
+
+.soon {
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 0.08rem 0.4rem;
+	border-radius: var(--radius-pill);
+	background: var(--surface-inset);
+	color: var(--ink-400);
+	border: 1px solid var(--ink-200);
 }
 
-.create-job-container {
-  width: 100%;
-  max-width: 620px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
-  padding: 32px;
+.form-actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-4);
+	flex-wrap: wrap;
+}
+.form-note { font-size: var(--text-xs); color: var(--ink-400); max-width: 44ch; }
+.form-actions-btns { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.form-actions-btns button { min-width: 130px; }
+
+@media (max-width: 680px) {
+	.form-grid { grid-template-columns: 1fr; }
+	.ht-page-head { flex-direction: column; align-items: stretch; }
+	.form-actions { flex-direction: column; align-items: stretch; }
+	.form-actions-btns { justify-content: stretch; }
+	.form-actions-btns button { flex: 1; }
 }
 
-.create-job-header {
-  text-align: left;
-  margin-bottom: 24px;
-}
-
-.create-job-header h2 {
-  margin: 0 0 8px;
-  font-size: 2rem;
-  color: #0f172a;
-}
-
-.create-job-header p {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.95rem;
-}
-
-.create-job-form {
-  display: grid;
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.create-job-form input,
-.create-job-form textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #0f172a;
-  padding: 14px 16px;
-  font-size: 0.98rem;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.create-job-form input::placeholder,
-.create-job-form textarea::placeholder {
-  color: #94a3b8;
-}
-
-.create-job-form input:focus,
-.create-job-form textarea:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
-}
-
-.create-job-form textarea {
-  resize: vertical;
-  min-height: 120px;
-}
-
-.create-job-btn {
-  margin-top: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 14px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.22);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-}
-
-.create-job-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(124, 58, 237, 0.28);
-}
-
-.create-job-btn:active {
-  transform: translateY(0);
-  opacity: 0.95;
-}
-
-@media (max-width: 640px) {
-  .create-job-container {
-    padding: 22px;
-    border-radius: 20px;
-  }
-
-  .create-job-header h2 {
-    font-size: 1.6rem;
-  }
+@media (prefers-reduced-motion: reduce) {
+	.form-section { animation: none; }
 }

@@ -1,0 +1,210 @@
+.sidebar {
+  flex: 0 0 252px;
+  width: 252px;
+  align-self: stretch;
+  padding: var(--space-5) var(--space-4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.55));
+  border-right: 1px solid var(--ink-200);
+  backdrop-filter: blur(8px);
+}
+
+.sidebar-nav {
+  position: sticky;
+  top: calc(68px + var(--space-5));
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+/* Staggered entrance — each item cascades in on mount. */
+.sidebar-item {
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: sb-enter var(--dur-3) var(--ease) forwards;
+  animation-delay: calc(var(--i) * 55ms + 40ms);
+}
+
+@keyframes sb-enter {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.sidebar-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.66rem 0.8rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-600);
+  border: 1px solid transparent;
+  overflow: hidden;
+  isolation: isolate;
+  transition: background var(--dur-2) var(--ease),
+              color var(--dur-2) var(--ease),
+              transform var(--dur-1) var(--ease),
+              box-shadow var(--dur-2) var(--ease);
+}
+
+/* Growing left rail — the vertical accent that scales in on hover/active. */
+.sidebar-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-500);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+
+/* Icon container with a soft tinted chip behind it. */
+.sidebar-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  background: var(--ink-100);
+  color: var(--ink-500);
+  transition: background var(--dur-2) var(--ease),
+              color var(--dur-2) var(--ease),
+              transform var(--dur-2) var(--ease);
+}
+
+.sidebar-icon {
+  width: 17px;
+  height: 17px;
+  transition: transform var(--dur-2) var(--ease);
+}
+
+.sidebar-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Chevron hidden until hover/active, then slides in. */
+.sidebar-chevron {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: currentColor;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+}
+.sidebar-chevron svg { width: 14px; height: 14px; }
+
+/* ---- Hover ------------------------------------------------------------- */
+.sidebar-link:hover {
+  background: var(--surface);
+  color: var(--ink-900);
+  border-color: var(--ink-200);
+  transform: translateX(3px);
+  box-shadow: var(--shadow-xs);
+}
+.sidebar-link:hover::before { transform: translateY(-50%) scaleY(1); }
+.sidebar-link:hover .sidebar-icon-wrap {
+  background: var(--brand-50);
+  color: var(--brand-600);
+  transform: scale(1.06);
+}
+.sidebar-link:hover .sidebar-icon { transform: rotate(-4deg) scale(1.05); }
+.sidebar-link:hover .sidebar-chevron { opacity: 0.5; transform: translateX(0); }
+
+/* ---- Active ------------------------------------------------------------ */
+.sidebar-link.active {
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-600) 70%, var(--brand-700));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-brand);
+  transform: translateX(0);
+}
+.sidebar-link.active::before {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-50%) scaleY(1);
+}
+.sidebar-link.active .sidebar-icon-wrap {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.sidebar-link.active .sidebar-chevron { opacity: 0.9; transform: translateX(0); }
+
+/* One-time pop when an item becomes active. */
+.sidebar-link.active .sidebar-icon-wrap { animation: sb-pop var(--dur-3) var(--ease); }
+@keyframes sb-pop {
+  0%   { transform: scale(0.8); }
+  55%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Slow sheen sweep across the active item. */
+.sidebar-link.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.28) 48%,
+    transparent 72%
+  );
+  transform: translateX(-120%);
+  animation: sb-sheen 4.5s var(--ease) 0.4s infinite;
+}
+@keyframes sb-sheen {
+  0%   { transform: translateX(-120%); }
+  22%  { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+.sidebar-link:active { transform: translateX(2px) scale(0.99); }
+
+.sidebar-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ---- Mobile ------------------------------------------------------------ */
+@media (max-width: 860px) {
+  .sidebar {
+    flex-basis: auto;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--ink-200);
+    padding: var(--space-3) var(--space-4);
+  }
+  .sidebar-nav { position: static; }
+  .sidebar-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .sidebar-link { padding: 0.5rem 0.7rem; }
+  .sidebar-chevron { display: none; }
+  .sidebar-link.active::after { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-item { opacity: 1; transform: none; animation: none; }
+  .sidebar-link.active::after { animation: none; display: none; }
+  .sidebar-link.active .sidebar-icon-wrap { animation: none; }
+}

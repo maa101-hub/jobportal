@@ -1,18 +1,148 @@
-.employees-container {
-  width: 500px;
-  margin: 40px auto;
+.team-page { width: 100%; }
+
+/* Search + header actions */
+.team-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+.team-search svg {
+	position: absolute;
+	left: 0.75rem;
+	width: 16px; height: 16px;
+	color: var(--ink-400);
+	pointer-events: none;
+}
+.team-search input {
+	width: 240px;
+	padding-left: 2.3rem;
+	height: 42px;
+}
+.ht-page-actions button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	height: 42px;
 }
 
-.employee-card {
-  border: 1px solid #ccc;
-  padding: 15px;
-  margin: 10px 0;
+.team-banner {
+	padding: 0.85rem 1.1rem;
+	border-radius: var(--radius-md);
+	background: var(--danger-50);
+	border: 1px solid #fecaca;
+	color: var(--danger-700);
+	font-size: var(--text-sm);
+	font-weight: 500;
 }
 
-button {
-  margin-top: 10px;
-  padding: 6px 12px;
-  background-color: red;
-  color: white;
-  border: none;
+/* Groups */
+.team-groups { display: flex; flex-direction: column; gap: var(--space-8); }
+.team-group { animation: ht-fade-up var(--dur-3) var(--ease) both; }
+
+.team-group-head {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	margin-bottom: var(--space-4);
+}
+.team-group-desc { font-size: var(--text-sm); color: var(--ink-500); flex: 1; min-width: 0; }
+.team-group-count {
+	display: grid; place-items: center;
+	min-width: 26px; height: 26px;
+	padding: 0 0.5rem;
+	border-radius: var(--radius-pill);
+	background: var(--surface-inset);
+	color: var(--ink-600);
+	font-size: var(--text-xs);
+	font-weight: 700;
+}
+
+.team-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+	gap: var(--space-4);
+}
+
+.team-card {
+	position: relative;
+	padding: var(--space-5);
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	border: 1px solid var(--ink-200);
+	box-shadow: var(--shadow-sm);
+	transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+	animation: ht-fade-up var(--dur-3) var(--ease) both;
+	animation-delay: calc(var(--i) * 55ms + 60ms);
+}
+.team-card:hover {
+	transform: translateY(-4px);
+	box-shadow: var(--shadow-md);
+	border-color: var(--brand-200);
+}
+
+.team-card-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: var(--space-3);
+}
+.team-card .ht-avatar { width: 48px; height: 48px; font-size: var(--text-base); }
+
+.team-remove {
+	width: 34px; height: 34px;
+	padding: 0;
+	display: grid; place-items: center;
+	background: var(--surface);
+	color: var(--ink-400);
+	border: 1px solid var(--ink-200);
+	border-radius: var(--radius-md);
+	box-shadow: none;
+	opacity: 0;
+	transition: opacity var(--dur-2) var(--ease), background var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+.team-remove svg { width: 16px; height: 16px; }
+.team-card:hover .team-remove { opacity: 1; }
+.team-remove:hover {
+	background: var(--danger-50);
+	color: var(--danger-700);
+	border-color: #fecaca;
+	box-shadow: none;
+	filter: none;
+	transform: none;
+}
+
+.team-name { margin: 0 0 2px; font-size: var(--text-lg); }
+.team-email {
+	margin: 0 0 var(--space-4);
+	font-size: var(--text-sm);
+	color: var(--ink-500);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.team-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* Skeleton loading */
+.team-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: var(--space-4); }
+.team-skel-card {
+	height: 168px;
+	border-radius: var(--radius-lg);
+	background: linear-gradient(100deg, var(--surface-inset) 30%, #ffffff 50%, var(--surface-inset) 70%);
+	background-size: 200% 100%;
+	animation: team-shimmer 1.3s linear infinite;
+	animation-delay: calc(var(--i) * 120ms);
+}
+@keyframes team-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.team-remove:focus-visible { opacity: 1; box-shadow: var(--ring); }
+
+@media (max-width: 640px) {
+	.team-search input { width: 100%; }
+	.ht-page-head { flex-direction: column; align-items: stretch; }
+	.ht-page-actions { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.team-card, .team-group { animation: none; }
+	.team-skel-card { animation: none; }
 }

@@ -1,111 +1,103 @@
 import axios from "axios";
 
-// ─── Axios Instances ────────────────────────────────────────────────────────
+// ─── Single Backend (Monolith) ──────────────────────────────────────────────
+// The former microservices (user/job/application/offer) now live in one Spring
+// Boot app served from a single origin. Override with VITE_API_BASE_URL when
+// deploying behind a different host.
 
-export const userAPI = axios.create({
-  baseURL: "http://localhost:8091",
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+const api = axios.create({
+  baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-export const jobAPI = axios.create({
-  baseURL: "http://localhost:8092",
-  headers: { "Content-Type": "application/json" },
-});
-
-export const applicationAPI = axios.create({
-  baseURL: "http://localhost:8093",
-  headers: { "Content-Type": "application/json" },
-});
-
-export const offerAPI = axios.create({
-  baseURL: "http://localhost:8083",
-  headers: { "Content-Type": "application/json" },
-});
+// Backwards-compatible aliases so existing endpoint/page code keeps working.
+// All four now point at the same monolith instance.
+export const userAPI = api;
+export const jobAPI = api;
+export const applicationAPI = api;
+export const offerAPI = api;
 
 // ─── Request Interceptor (attach token if present) ──────────────────────────
 
-const attachToken = (config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-};
-
-[userAPI, jobAPI, applicationAPI, offerAPI].forEach((instance) => {
-  instance.interceptors.request.use(attachToken, (error) =>
-    Promise.reject(error)
-  );
-});
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // ─── Response Interceptor (global error handling) ───────────────────────────
 
-const handleResponseError = (error) => {
-  if (error.response) {
-    console.error(
-      `[API Error] ${error.response.status}: ${error.response.data?.message || error.message}`
-    );
-  } else {
-    console.error("[API Error] Network error:", error.message);
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response) {
+      console.error(
+        `[API Error] ${error.response.status}: ${error.response.data?.message || error.message}`
+      );
+    } else {
+      console.error("[API Error] Network error:", error.message);
+    }
+    return Promise.reject(error);
   }
-  return Promise.reject(error);
-};
+);
 
-[userAPI, jobAPI, applicationAPI, offerAPI].forEach((instance) => {
-  instance.interceptors.response.use((res) => res, handleResponseError);
-});
+export default api;
 
 // ─── User Service Endpoints ─────────────────────────────────────────────────
 
 export const userService = {
-  login: (credentials) => userAPI.post("/users/login", credentials),
-  signup: (userData) => userAPI.post("/users/signup", userData),
-  getUserById: (id) => userAPI.get(`/users/${id}`),
-  getAllUsers: () => userAPI.get("/users"),
+  login: (credentials) => api.post("/users/login", credentials),
+  signup: (userData) => api.post("/users/signup", userData),
+  getUserById: (id) => api.get(`/users/${id}`),
+  getAllUsers: () => api.get("/users"),
 };
 
 // ─── Job Service Endpoints ──────────────────────────────────────────────────
 
 export const jobService = {
-  getAllJobs: () => jobAPI.get("/api/jobs"),
-  getCompanyJobs: (companyId) => jobAPI.get(`/api/jobs/company/${companyId}`),
-  getJobById: (id) => jobAPI.get(`/api/jobs/${id}`),
-  createJob: (jobData) => jobAPI.post("/api/jobs", jobData),
-  updateJob: (id, jobData) => jobAPI.put(`/api/jobs/${id}`, jobData),
+  getAllJobs: () => api.get("/api/jobs"),
+  getCompanyJobs: (companyId) => api.get(`/api/jobs/company/${companyId}`),
+  getJobById: (id) => api.get(`/api/jobs/${id}`),
+  createJob: (jobData) => api.post("/api/jobs", jobData),
+  updateJob: (id, jobData) => api.put(`/api/jobs/${id}`, jobData),
   approveJob: (jobId, approvedBy) =>
-    jobAPI.put(`/api/jobs/${jobId}/approve/${approvedBy}`),
-  closeJob: (jobId) => jobAPI.put(`/api/jobs/${jobId}/close`),
-  deleteJob: (id) => jobAPI.delete(`/api/jobs/${id}`),
+    api.put(`/api/jobs/${jobId}/approve/${approvedBy}`),
+  closeJob: (jobId) => api.put(`/api/jobs/${jobId}/close`),
+  rejectJob: (jobId) => api.put(`/api/jobs/${jobId}/reject`),
+  deleteJob: (id) => api.delete(`/api/jobs/${id}`),
 };
 
 // ─── Application Service Endpoints ─────────────────────────────────────────
 
 export const applicationService = {
-  applyForJob: (applicationData) =>
-    applicationAPI.post("/applications", applicationData),
-  getApplicationsByUser: (userId) =>
-    applicationAPI.get(`/applications/user/${userId}`),
-  getAllApplications: () => applicationAPI.get("/applications"),
-  getApplicationsByJob: (jobId) =>
-    applicationAPI.get(`/applications/job/${jobId}`),
+  applyForJob: (applicationData) => api.post("/applications", applicationData),
+  getApplicationsByUser: (userId) => api.get(`/applications/user/${userId}`),
+  getAllApplications: () => api.get("/applications"),
+  getApplicationsByJob: (jobId) => api.get(`/applications/job/${jobId}`),
   updateApplicationStatus: (id, status) =>
-    applicationAPI.put(`/applications/${id}/status?status=${status}`),
-  scheduleInterview: (interviewData) =>
-    applicationAPI.post("/interviews", interviewData),
+    api.put(`/applications/${id}/status?status=${status}`),
+  scheduleInterview: (interviewData) => api.post("/interviews", interviewData),
   getInterviewsByApplication: (applicationId) =>
-    applicationAPI.get(`/interviews/application/${applicationId}`),
+    api.get(`/interviews/application/${applicationId}`),
   addFeedback: (interviewId, feedback) =>
-    applicationAPI.put(`/interviews/${interviewId}/feedback?feedback=${encodeURIComponent(feedback)}`),
+    api.put(`/interviews/${interviewId}/feedback?feedback=${encodeURIComponent(feedback)}`),
 };
 
 // ─── Offer Service Endpoints ────────────────────────────────────────────────
 
 export const offerService = {
-  createOffer: (offerData) => offerAPI.post("/offers", offerData),
+  createOffer: (offerData) => api.post("/offers", offerData),
   getOfferByApplication: (applicationId) =>
-    offerAPI.get(`/offers/application/${applicationId}`),
-  acceptOffer: (id) => offerAPI.put(`/offers/${id}/accept`),
-  rejectOffer: (id) => offerAPI.put(`/offers/${id}/reject`),
+    api.get(`/offers/application/${applicationId}`),
+  acceptOffer: (id) => api.put(`/offers/${id}/accept`),
+  rejectOffer: (id) => api.put(`/offers/${id}/reject`),
   joinOffer: (id, joiningDate) => {
     const query = joiningDate ? `?joiningDate=${encodeURIComponent(joiningDate)}` : "";
-    return offerAPI.put(`/offers/${id}/join${query}`);
+    return api.put(`/offers/${id}/join${query}`);
   },
 };

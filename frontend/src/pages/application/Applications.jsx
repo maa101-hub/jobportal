@@ -1,430 +1,424 @@
-import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./Applications.css";
 
 import {
-  getInterviewsByApplication,
-  getJobApplications,
-  offerCandidate,
-  rejectCandidate,
-  scheduleInterview,
-  updateApplicationStatus,
+	getInterviewsByApplication,
+	getJobApplications,
+	offerCandidate,
+	rejectCandidate,
+	scheduleInterview,
+	updateApplicationStatus,
 } from "../../services/endpoints";
+import { normalizeList, toStage, initials, formatDate, humanize } from "../../utils/helpers";
+import { PIPELINE_STAGES, STAGE_TONE } from "../../utils/constants";
+import { useToast } from "../../components/Toast/ToastContext";
 
 const ROUND_ORDER = ["L1", "L2", "R1"];
 const COMPLETED_INTERVIEW_STATUSES = ["COMPLETED", "PENDING_DECISION", "OFFERED", "REJECTED"];
 const SCHEDULED_INTERVIEW_STATUSES = ["SCHEDULED", "INTERVIEW_SCHEDULED"];
 
+const STAGE_LABEL = {
+	NEW: "New",
+	SCREENING: "Screening",
+	SHORTLISTED: "Shortlisted",
+	INTERVIEW: "Interview",
+	SELECTED: "Selected",
+	OFFER: "Offer",
+	HIRED: "Hired",
+};
+
 function Applications() {
-  const location = useLocation();
-  const [jobId, setJobId] = useState("");
-  const [applications, setApplications] = useState([]);
-  const [interviewsMap, setInterviewsMap] = useState({});
-  const [scheduleAtByApp, setScheduleAtByApp] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [searchedJobId, setSearchedJobId] = useState("");
+	const location = useLocation();
+	const navigate = useNavigate();
+	const toast = useToast();
 
-  const normalizeApplications = (payload) => {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.data)) return payload.data;
-    if (Array.isArray(payload?.applications)) return payload.applications;
-    if (Array.isArray(payload?.content)) return payload.content;
-    if (Array.isArray(payload?.data?.applications)) return payload.data.applications;
-    return [];
-  };
+	const [jobId, setJobId] = useState("");
+	const [applications, setApplications] = useState([]);
+	const [interviewsMap, setInterviewsMap] = useState({});
+	const [scheduleAt, setScheduleAt] = useState("");
+	const [loading, setLoading] = useState(false);
+	const [actionLoading, setActionLoading] = useState(false);
+	const [searchedJobId, setSearchedJobId] = useState("");
+	const [openAppId, setOpenAppId] = useState(null);
 
-  const normalizeInterviews = (payload) => {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.data)) return payload.data;
-    if (Array.isArray(payload?.interviews)) return payload.interviews;
-    if (Array.isArray(payload?.content)) return payload.content;
-    if (Array.isArray(payload?.data?.interviews)) return payload.data.interviews;
-    return [];
-  };
+	// ---- interview round helpers (state machine preserved) ------------------
+	const latestRound = (interviews, round) =>
+		(interviews || [])
+			.filter((i) => String(i?.round || "").toUpperCase() === round)
+			.sort((a, b) => new Date(b?.scheduledAt || 0) - new Date(a?.scheduledAt || 0))[0] || null;
 
-  const getLatestRoundInterview = (interviews, round) => {
-    const filtered = (interviews || [])
-      .filter((item) => String(item?.round || "").toUpperCase() === round)
-      .sort((a, b) => new Date(b?.scheduledAt || 0) - new Date(a?.scheduledAt || 0));
+	const isCompleted = (i) => COMPLETED_INTERVIEW_STATUSES.includes(String(i?.status || "").toUpperCase());
+	const isScheduled = (i) => SCHEDULED_INTERVIEW_STATUSES.includes(String(i?.status || "").toUpperCase());
 
-    return filtered[0] || null;
-  };
+	const finalDecisionRound = (ivs) => {
+		const r1 = latestRound(ivs, "R1");
+		return r1 && isCompleted(r1) ? { round: "R1", interview: r1 } : null;
+	};
 
-  const isCompletedInterview = (interview) =>
-    COMPLETED_INTERVIEW_STATUSES.includes(String(interview?.status || "").toUpperCase());
+	const nextRoundToSchedule = (ivs) => {
+		const l1 = latestRound(ivs, "L1");
+		const l2 = latestRound(ivs, "L2");
+		const r1 = latestRound(ivs, "R1");
+		if (!l1) return "L1";
+		if (!isCompleted(l1)) return null;
+		if (!l2) return "L2";
+		if (!isCompleted(l2)) return null;
+		if (!r1) return "R1";
+		if (!isCompleted(r1)) return null;
+		return null;
+	};
 
-  const isScheduledInterview = (interview) =>
-    SCHEDULED_INTERVIEW_STATUSES.includes(String(interview?.status || "").toUpperCase());
+	const flowLabel = (app, ivs) => {
+		const status = String(app?.status || "").toUpperCase();
+		if (status === "REJECTED") return "Rejected";
+		if (["OFFERED", "OFFER_RELEASED"].includes(status)) return "Offer sent";
+		if (["ACCEPTED", "JOINED"].includes(status)) return humanize(status);
+		if (finalDecisionRound(ivs)?.round === "R1") return "All rounds done — offer or reject";
+		const scheduled = ROUND_ORDER.find((r) => {
+			const iv = latestRound(ivs, r);
+			return iv && isScheduled(iv);
+		});
+		if (scheduled) return `${scheduled} interview scheduled`;
+		const next = nextRoundToSchedule(ivs);
+		if (next === "L2") return "L1 cleared — schedule L2";
+		if (next === "R1") return "L2 cleared — schedule HR (R1)";
+		return "Ready for first round (L1)";
+	};
 
-  const getFinalDecisionRound = (appInterviews) => {
-    const r1 = getLatestRoundInterview(appInterviews, "R1");
-    if (r1 && isCompletedInterview(r1)) return { round: "R1", interview: r1 };
-    return null;
-  };
+	// ---- data ---------------------------------------------------------------
+	const loadInterviews = useCallback(async (apps) => {
+		const map = {};
+		for (const app of apps) {
+			try {
+				const res = await getInterviewsByApplication(app.id);
+				map[app.id] = normalizeList(res.data);
+			} catch {
+				map[app.id] = [];
+			}
+		}
+		setInterviewsMap(map);
+	}, []);
 
-  const getNextRoundToSchedule = (appInterviews) => {
-    const l1 = getLatestRoundInterview(appInterviews, "L1");
-    const l2 = getLatestRoundInterview(appInterviews, "L2");
-    const r1 = getLatestRoundInterview(appInterviews, "R1");
+	const fetchApplications = useCallback(
+		async (overrideJobId) => {
+			const effective = overrideJobId ?? jobId;
+			const n = Number(String(effective).trim());
+			if (!n || n <= 0) return;
+			try {
+				setLoading(true);
+				const res = await getJobApplications(n);
+				const list = normalizeList(res.data);
+				setApplications(list);
+				await loadInterviews(list);
+				setSearchedJobId(String(n));
+				setJobId(String(n));
+			} catch (err) {
+				console.log(err);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[jobId, loadInterviews]
+	);
 
-    if (!l1) return "L1";
-    if (!isCompletedInterview(l1)) return null;
+	useEffect(() => {
+		const params = new URLSearchParams(location.search);
+		const pre = params.get("jobId");
+		if (pre) {
+			const t = setTimeout(() => fetchApplications(pre), 0);
+			return () => clearTimeout(t);
+		}
+	}, [location.search, fetchApplications]);
 
-    if (!l2) return "L2";
-    if (!isCompletedInterview(l2)) return null;
+	// ---- actions ------------------------------------------------------------
+	const setStatus = async (id, status) => {
+		try {
+			setActionLoading(true);
+			await updateApplicationStatus(id, status);
+			toast.success(status === "REJECTED" ? "Candidate rejected." : `Moved to ${humanize(status)}.`);
+			await fetchApplications();
+		} catch (err) {
+			console.log(err);
+			toast.error("Couldn't update status.");
+		} finally {
+			setActionLoading(false);
+		}
+	};
 
-    if (!r1) return "R1";
-    if (!isCompletedInterview(r1)) return null;
+	// Once an offer is in play, interviewing is locked.
+	const OFFER_LOCKED = ["OFFERED", "OFFER_RELEASED", "ACCEPTED", "JOINED"];
 
-    return null;
-  };
+	const scheduleRound = async (appId, round, appStatus) => {
+		if (OFFER_LOCKED.includes(String(appStatus || "").toUpperCase())) {
+			toast.warning("This candidate already has an offer — interviews are closed.");
+			return;
+		}
+		if (!scheduleAt) {
+			toast.error("Pick a date and time first.");
+			return;
+		}
+		try {
+			setActionLoading(true);
+			await scheduleInterview({ applicationId: appId, round, scheduledAt: scheduleAt });
+			await updateApplicationStatus(appId, "INTERVIEW_SCHEDULED");
+			setScheduleAt("");
+			toast.success(`${round} interview scheduled.`);
+			await fetchApplications();
+		} catch (err) {
+			console.log(err);
+			toast.error("Couldn't schedule the interview.");
+		} finally {
+			setActionLoading(false);
+		}
+	};
 
-  const getFlowLabel = (app, appInterviews) => {
-    const nextRound = getNextRoundToSchedule(appInterviews);
-    const finalDecision = getFinalDecisionRound(appInterviews);
-    const normalizedStatus = String(app?.status || "").toUpperCase();
+	const roundDecision = async (appId, round, interviewId, decision) => {
+		try {
+			setActionLoading(true);
+			if (decision === "REJECT") {
+				if (round === "R1") await rejectCandidate(interviewId, "Rejected after final HR round");
+				else await updateApplicationStatus(appId, "REJECTED");
+			} else if (decision === "CLEAR") {
+				if (round === "L1") await updateApplicationStatus(appId, "L1_CLEARED");
+				if (round === "L2") await updateApplicationStatus(appId, "L2_CLEARED");
+			} else if (decision === "OFFER") {
+				await offerCandidate(interviewId);
+			}
+			toast.success(decision === "OFFER" ? "Offer sent to candidate." : decision === "REJECT" ? "Candidate rejected." : "Round updated.");
+			await fetchApplications();
+		} catch (err) {
+			console.log(err);
+			toast.error("That action didn't go through.");
+		} finally {
+			setActionLoading(false);
+		}
+	};
 
-    if (normalizedStatus === "REJECTED") return "Rejected";
-    if (["OFFERED", "OFFER_RELEASED"].includes(normalizedStatus)) return "Offer Sent";
-    if (["ACCEPTED", "JOINED"].includes(normalizedStatus)) return normalizedStatus;
+	// ---- board grouping -----------------------------------------------------
+	const columns = useMemo(() => {
+		const map = PIPELINE_STAGES.reduce((acc, s) => ({ ...acc, [s]: [] }), {});
+		applications.forEach((app) => {
+			const stage = toStage(app.status);
+			if (String(app.status).toUpperCase() === "REJECTED") return; // rejected shown separately
+			(map[stage] || map.NEW).push(app);
+		});
+		return map;
+	}, [applications]);
 
-    if (finalDecision?.round === "R1") return "All interviews completed - offer or reject";
+	const rejected = useMemo(
+		() => applications.filter((a) => String(a.status).toUpperCase() === "REJECTED"),
+		[applications]
+	);
 
-    const scheduledRound = ROUND_ORDER.find((round) => {
-      const interview = getLatestRoundInterview(appInterviews, round);
-      return interview && isScheduledInterview(interview);
-    });
+	const openApp = applications.find((a) => a.id === openAppId) || null;
+	const openIvs = openApp ? interviewsMap[openApp.id] || [] : [];
 
-    if (scheduledRound) return `${scheduledRound} interview scheduled`;
-    if (nextRound === "L2") return "L1 completed - schedule second round (L2)";
-    if (nextRound === "R1") return "L2 completed - schedule third round (HR)";
-    return "Ready for first round (L1)";
-  };
+	return (
+		<div className="ht-page apps-page">
+			<header className="ht-page-head">
+				<div>
+					<h2>Applications</h2>
+					<p>Move candidates through the hiring pipeline.</p>
+				</div>
+				<div className="ht-page-actions">
+					<div className="apps-search">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+						<input
+							type="text"
+							inputMode="numeric"
+							placeholder="Job ID…"
+							value={jobId}
+							onChange={(e) => setJobId(e.target.value)}
+							onKeyDown={(e) => e.key === "Enter" && fetchApplications()}
+							aria-label="Job ID"
+						/>
+					</div>
+					<button onClick={() => fetchApplications()} disabled={loading}>
+						{loading ? "Loading…" : "Load"}
+					</button>
+				</div>
+			</header>
 
-  const loadInterviewsForApplications = useCallback(async (apps) => {
-    const map = {};
+			{!searchedJobId ? (
+				<div className="ht-empty">
+					<div className="ht-empty-mark" aria-hidden="true" />
+					<h3>Load a job's applications</h3>
+					<p>Enter a Job ID above, or open a job's “View Applications” from Company Jobs.</p>
+				</div>
+			) : applications.length === 0 && !loading ? (
+				<div className="ht-empty">
+					<div className="ht-empty-mark" aria-hidden="true" />
+					<h3>No applications yet</h3>
+					<p>No candidate has applied for job #{searchedJobId} so far.</p>
+				</div>
+			) : (
+				<>
+					<div className="kanban" role="list">
+						{PIPELINE_STAGES.map((stage) => {
+							const items = columns[stage] || [];
+							const tone = STAGE_TONE[stage] || "info";
+							return (
+								<section className="kanban-col" key={stage} role="listitem">
+									<header className="kanban-col-head">
+										<span className={`kanban-dot tone-${tone}`} />
+										<span className="kanban-col-title">{STAGE_LABEL[stage]}</span>
+										<span className="kanban-col-count">{items.length}</span>
+									</header>
+									<div className="kanban-col-body">
+										{items.map((app, i) => (
+											<button
+												key={app.id}
+												className="kanban-card"
+												style={{ "--i": i }}
+												onClick={() => setOpenAppId(app.id)}
+											>
+												<div className="kanban-card-top">
+													<span className="ht-avatar" style={{ width: 34, height: 34, fontSize: "0.75rem" }}>
+														{initials(`U${app.userId}`)}
+													</span>
+													<span className="kanban-card-id">#{app.id}</span>
+												</div>
+												<strong className="kanban-card-name">Candidate {app.userId}</strong>
+												<span className="kanban-card-job">Job #{app.jobId ?? searchedJobId}</span>
+												<span className={`ht-pill tone-${tone}`}>{humanize(app.status)}</span>
+											</button>
+										))}
+										{items.length === 0 && <p className="kanban-empty">—</p>}
+									</div>
+								</section>
+							);
+						})}
+					</div>
 
-    for (const app of apps) {
-      try {
-        const res = await getInterviewsByApplication(app.id);
-        map[app.id] = normalizeInterviews(res.data);
-      } catch {
-        map[app.id] = [];
-      }
-    }
+					{rejected.length > 0 && (
+						<details className="apps-rejected">
+							<summary>Rejected ({rejected.length})</summary>
+							<div className="apps-rejected-list">
+								{rejected.map((app) => (
+									<button key={app.id} className="apps-rejected-item" onClick={() => setOpenAppId(app.id)}>
+										<span className="ht-avatar tone-pink" style={{ width: 30, height: 30, fontSize: "0.7rem" }}>{initials(`U${app.userId}`)}</span>
+										Candidate {app.userId} · #{app.id}
+									</button>
+								))}
+							</div>
+						</details>
+					)}
+				</>
+			)}
 
-    setInterviewsMap(map);
-  }, []);
+			{/* Detail drawer */}
+			{openApp && (
+				<div className="drawer-scrim" onClick={() => setOpenAppId(null)}>
+					<aside className="drawer" onClick={(e) => e.stopPropagation()}>
+						<header className="drawer-head">
+							<div className="drawer-id">
+								<span className="ht-avatar">{initials(`U${openApp.userId}`)}</span>
+								<div>
+									<h3>Candidate {openApp.userId}</h3>
+									<p>Application #{openApp.id} · Job #{openApp.jobId ?? searchedJobId}</p>
+								</div>
+							</div>
+							<button className="drawer-close" onClick={() => setOpenAppId(null)} aria-label="Close">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6l-12 12" /></svg>
+							</button>
+						</header>
 
-  const fetchApplications = useCallback(async (overrideJobId) => {
-    const effectiveJobId = overrideJobId ?? jobId;
-    const normalizedJobId = Number(String(effectiveJobId).trim());
+						<div className="drawer-body">
+							<div className="drawer-row">
+								<span>Current stage</span>
+								<span className={`ht-pill tone-${STAGE_TONE[toStage(openApp.status)]}`}>{humanize(openApp.status)}</span>
+							</div>
+							<div className="drawer-row">
+								<span>Resume</span>
+								<strong>{openApp.resumeUrl || "Not provided"}</strong>
+							</div>
+							<div className="drawer-row">
+								<span>Applied</span>
+								<strong>{formatDate(openApp.appliedAt)}</strong>
+							</div>
+							<div className="drawer-flow">{flowLabel(openApp, openIvs)}</div>
 
-    if (!normalizedJobId || normalizedJobId <= 0) {
-      alert("Please enter valid Job ID");
-      return;
-    }
+							{(() => {
+								const status = String(openApp.status).toUpperCase();
+								const isRejected = status === "REJECTED";
+								const offerLocked = OFFER_LOCKED.includes(status);
+								const isHired = status === "JOINED";
+								const beyond = ["SHORTLISTED", "INTERVIEW_SCHEDULED", "L1_CLEARED", "L2_CLEARED"].includes(status);
+								const next = nextRoundToSchedule(openIvs);
+								const final = finalDecisionRound(openIvs);
 
-    try {
-      setLoading(true);
-      const res = await getJobApplications(normalizedJobId);
-      const normalized = normalizeApplications(res.data);
-      setApplications(normalized);
-      await loadInterviewsForApplications(normalized);
-      setSearchedJobId(String(normalizedJobId));
-      setJobId(String(normalizedJobId));
-    } catch (err) {
-      console.log(err);
-      alert("Failed to fetch applications");
-    } finally {
-      setLoading(false);
-    }
-  }, [jobId, loadInterviewsForApplications]);
+								// Once an offer exists (or candidate rejected), the hiring
+								// pipeline for this candidate is settled — no more interviews.
+								if (isRejected) {
+									return (
+										<div className="drawer-actions">
+											<div className="drawer-settled tone-danger">This candidate was rejected.</div>
+											<button className="ht-btn-ghost" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>View full profile</button>
+										</div>
+									);
+								}
+								if (offerLocked) {
+									return (
+										<div className="drawer-actions">
+											<div className={`drawer-settled ${isHired ? "tone-green" : "tone-brand"}`}>
+												{isHired ? "🎉 Hired — candidate has joined." : status === "ACCEPTED" ? "Offer accepted — awaiting joining confirmation." : "Offer sent — awaiting candidate response."}
+											</div>
+											<button className="ht-btn-ghost" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>View full profile</button>
+										</div>
+									);
+								}
 
-  const handleJobIdKeyDown = (e) => {
-    if (e.key === "Enter") {
-      fetchApplications();
-    }
-  };
+								return (
+									<div className="drawer-actions">
+										{!beyond && (
+											<button className="ht-btn-success" onClick={() => setStatus(openApp.id, "SHORTLISTED")} disabled={actionLoading}>Shortlist</button>
+										)}
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const prefilledJobId = params.get("jobId");
+										{beyond && !final && next && (
+											<div className="drawer-schedule">
+												<label>Schedule {next}{next === "R1" ? " (HR)" : ""}</label>
+												<input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} />
+												<button onClick={() => scheduleRound(openApp.id, next, status)} disabled={actionLoading}>Schedule {next}</button>
+											</div>
+										)}
 
-    if (prefilledJobId) {
-      const deferredFetch = setTimeout(() => {
-        fetchApplications(prefilledJobId);
-      }, 0);
+										{final?.round === "R1" && (
+											<div className="drawer-decision">
+												<button className="ht-btn-success" onClick={() => roundDecision(openApp.id, "R1", final.interview.id, "OFFER")} disabled={actionLoading}>Send Offer</button>
+												<button className="ht-btn-danger" onClick={() => roundDecision(openApp.id, "R1", final.interview.id, "REJECT")} disabled={actionLoading}>Reject</button>
+											</div>
+										)}
 
-      return () => clearTimeout(deferredFetch);
-    }
-  }, [location.search, fetchApplications]);
+										<button className="ht-btn-ghost" onClick={() => setStatus(openApp.id, "REJECTED")} disabled={actionLoading}>Reject candidate</button>
 
-  const handleStatusUpdate = async (id, status) => {
-    try {
-      setActionLoading(true);
-      await updateApplicationStatus(id, status);
-      alert(`Status updated to ${status}`);
-      if (jobId) {
-        await fetchApplications();
-      }
-    } catch (err) {
-      console.log(err);
-      alert("Update failed");
-    } finally {
-      setActionLoading(false);
-    }
-  };
+										<button className="ht-btn-ghost" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>
+											View full profile
+										</button>
+									</div>
+								);
+							})()}
 
-  const handleScheduleRound = async (appId, nextRound) => {
-    const scheduledAt = scheduleAtByApp[appId];
-    if (!scheduledAt) {
-      alert("Please select schedule date and time first");
-      return;
-    }
-
-    try {
-      setActionLoading(true);
-      await scheduleInterview({
-        applicationId: appId,
-        round: nextRound,
-        scheduledAt,
-      });
-      await updateApplicationStatus(appId, "INTERVIEW_SCHEDULED");
-      alert(`${nextRound} interview scheduled`);
-      setScheduleAtByApp((prev) => ({ ...prev, [appId]: "" }));
-      await fetchApplications();
-    } catch (error) {
-      console.log(error);
-      alert("Failed to schedule interview");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRoundDecision = async (appId, round, interviewId, decision) => {
-    try {
-      setActionLoading(true);
-
-      if (decision === "REJECT") {
-        if (round === "R1") {
-          await rejectCandidate(interviewId, "Rejected after final HR round");
-        } else {
-          await updateApplicationStatus(appId, "REJECTED");
-        }
-        alert("Candidate rejected");
-      }
-
-      if (decision === "CLEAR") {
-        if (round === "L1") {
-          await updateApplicationStatus(appId, "L1_CLEARED");
-          alert("L1 cleared. Schedule L2 next.");
-        }
-        if (round === "L2") {
-          await updateApplicationStatus(appId, "L2_CLEARED");
-          alert("L2 cleared. Schedule HR (R1) next.");
-        }
-      }
-
-      if (decision === "OFFER") {
-        await offerCandidate(interviewId);
-        alert("Offer sent to candidate");
-      }
-
-      await fetchApplications();
-    } catch (error) {
-      console.log(error);
-      alert("Action failed");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  return (
-    <div className="applications-page">
-      <div className="applications-shell">
-        <div className="applications-header">
-          <div>
-            <h2>Applications Management</h2>
-            <p>Search by Job ID and manage candidate applications.</p>
-          </div>
-
-          <div className="applications-count">
-            <span className="count-label">Results</span>
-            <strong>{applications.length}</strong>
-          </div>
-        </div>
-
-        <div className="search-card">
-          <label htmlFor="jobId">Job ID</label>
-          <div className="search-box">
-            <input
-              id="jobId"
-              type="text"
-              inputMode="numeric"
-              placeholder="Enter Job ID to search"
-              value={jobId}
-              onChange={(e) => setJobId(e.target.value)}
-              onKeyDown={handleJobIdKeyDown}
-            />
-            <button onClick={fetchApplications} disabled={loading}>
-              {loading ? "Searching..." : "Search"}
-            </button>
-          </div>
-          <div className="jobid-preview">
-            Typed Job ID: <strong>{jobId || "—"}</strong>
-          </div>
-        </div>
-
-        {searchedJobId && (
-          <div className="search-summary">
-            Showing applications for Job ID: <b>{searchedJobId}</b>
-          </div>
-        )}
-
-        {applications.length === 0 ? (
-          <div className="empty-state">
-            <h3>{jobId ? "No applications found" : "Search applications"}</h3>
-            <p>
-              {jobId
-                ? "No candidate has applied for this job yet."
-                : "Enter a Job ID above to load the list."}
-            </p>
-          </div>
-        ) : (
-          <div className="applications-grid">
-            {applications.map((app) => {
-              const normalizedStatus = String(app.status || "").toUpperCase();
-              const isRejected = normalizedStatus === "REJECTED";
-              const isShortlistedOrBeyond = [
-                "SHORTLISTED",
-                "INTERVIEW_SCHEDULED",
-                "L1_CLEARED",
-                "L2_CLEARED",
-                "OFFERED",
-                "OFFER_RELEASED",
-                "ACCEPTED",
-                "JOINED",
-              ].includes(normalizedStatus);
-
-              return (
-              <div key={app.id} className="application-card">
-                <div className="card-top">
-                  <div>
-                    <h3>Application #{app.id}</h3>
-                    <p className="muted">Candidate User ID: {app.userId}</p>
-                  </div>
-                  <span className={`status-badge status-${String(app.status || "").toLowerCase()}`}>
-                    {app.status || "UNKNOWN"}
-                  </span>
-                </div>
-
-                <div className="card-details">
-                  <div>
-                    <span>Job ID</span>
-                    <strong>{app.jobId ?? app.job?.id ?? Number(jobId)}</strong>
-                  </div>
-                  <div>
-                    <span>Resume</span>
-                    <strong>{app.resumeUrl || "Not provided"}</strong>
-                  </div>
-                </div>
-
-                <div className="workflow-note">
-                  <span>Interview Flow</span>
-                  <strong>{getFlowLabel(app, interviewsMap[app.id] || [])}</strong>
-                </div>
-
-                {(() => {
-                  const appInterviews = interviewsMap[app.id] || [];
-                  const nextRound = getNextRoundToSchedule(appInterviews);
-                  const finalDecision = getFinalDecisionRound(appInterviews);
-
-                  return (
-                    <>
-                      {!finalDecision && nextRound && (
-                        <div className="inline-actions">
-                          <label>Schedule {nextRound}</label>
-                          <input
-                            type="datetime-local"
-                            value={scheduleAtByApp[app.id] || ""}
-                            onChange={(e) =>
-                              setScheduleAtByApp((prev) => ({
-                                ...prev,
-                                [app.id]: e.target.value,
-                              }))
-                            }
-                          />
-                          <button
-                            className="btn-schedule-round"
-                            onClick={() => handleScheduleRound(app.id, nextRound)}
-                            disabled={actionLoading || isRejected}
-                          >
-                            Schedule {nextRound}
-                          </button>
-                        </div>
-                      )}
-
-                      {finalDecision && finalDecision.round === "R1" && (
-                        <div className="decision-row">
-                          <button
-                            className="btn-offer"
-                            onClick={() =>
-                              handleRoundDecision(
-                                app.id,
-                                "R1",
-                                finalDecision.interview.id,
-                                "OFFER"
-                              )
-                            }
-                            disabled={actionLoading || isRejected}
-                          >
-                            Offer
-                          </button>
-                          <button
-                            className="btn-reject"
-                            onClick={() =>
-                              handleRoundDecision(
-                                app.id,
-                                "R1",
-                                finalDecision.interview.id,
-                                "REJECT"
-                              )
-                            }
-                            disabled={actionLoading || isRejected}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-
-                <div className="buttons">
-                  <button
-                    className="btn-shortlist"
-                    onClick={() => handleStatusUpdate(app.id, "SHORTLISTED")}
-                    disabled={actionLoading || isRejected || isShortlistedOrBeyond}
-                  >
-                    Shortlist
-                  </button>
-                  <button
-                    className="btn-reject"
-                    onClick={() => handleStatusUpdate(app.id, "REJECTED")}
-                    disabled={actionLoading || isRejected}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            );})}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+							{openIvs.length > 0 && (
+								<div className="drawer-history">
+									<h4>Interview history</h4>
+									<ul>
+										{openIvs.map((iv) => (
+											<li key={iv.id}>
+												<span className="drawer-round">{iv.round}</span>
+												<span className={`ht-pill tone-${isCompleted(iv) ? "green" : "amber"}`}>{humanize(iv.status)}</span>
+												<span className="drawer-when">{formatDate(iv.scheduledAt)}</span>
+											</li>
+										))}
+									</ul>
+								</div>
+							)}
+						</div>
+					</aside>
+				</div>
+			)}
+		</div>
+	);
 }
 
 export default Applications;

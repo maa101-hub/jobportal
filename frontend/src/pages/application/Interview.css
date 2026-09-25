@@ -1,511 +1,76 @@
-.interview-container {
-  width: min(100%, 1200px);
-  margin: 28px auto;
-  padding: 24px 16px 40px;
-}
-
-.interview-container h2 {
-  font-size: 2rem;
-  color: #0f172a;
-  margin-bottom: 32px;
-  text-align: center;
-}
-
-.interview-section {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 24px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-}
-
-.interview-section h3 {
-  font-size: 1.3rem;
-  color: #1e293b;
-  margin: 0 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.interview-section h3::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 24px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 2px;
-}
-
-/* Search Section */
-.search-section {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
-}
-
-.search-box {
-  display: flex;
-  gap: 12px;
-}
-
-.search-box input {
-  flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.search-box button {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.search-box button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
-}
-
-.search-box button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Candidates Grid */
-.candidates-section {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
-}
-
-.candidates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.candidate-card {
-  padding: 20px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.candidate-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
-  transform: translateY(-2px);
-}
-
-.candidate-card.selected {
-  border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.02);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
-}
-
-.candidate-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.candidate-header h4 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.1rem;
-}
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-badge.shortlisted {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.candidate-details {
-  font-size: 0.95rem;
-  color: #475569;
-}
-
-.candidate-details p {
-  margin: 8px 0;
-}
-
-.interview-scheduled {
-  color: #22c55e;
-  font-weight: 600;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.select-indicator {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
-  background: #22c55e;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-/* Schedule Section */
-.schedule-section {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
-}
-
-/* Decision Section */
-.decision-section {
-  background: linear-gradient(135deg, rgba(217, 119, 6, 0.05) 0%, rgba(234, 179, 8, 0.05) 100%);
-}
-
-.pending-interviews-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-}
-
-.decision-card {
-  padding: 20px;
-  background: white;
-  border: 2px solid #fbbf24;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.1);
-}
-
-.decision-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.decision-header h4 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.1rem;
-}
-
-.decision-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.decision-badge.pending {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.decision-details {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.decision-details p {
-  margin: 8px 0;
-  color: #475569;
-}
-
-.decision-details strong {
-  color: #1e293b;
-}
-
-.feedback-text {
-  background: #f3f4f6;
-  padding: 12px;
-  border-radius: 8px;
-  border-left: 3px solid #3b82f6;
-  font-style: italic;
-  color: #1f2937;
-  margin-top: 8px !important;
-}
-
-.decision-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.btn-offer {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-}
-
-.btn-offer:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(34, 197, 94, 0.3);
-}
-
-.btn-reject {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-}
-
-.btn-reject:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
-}
-
-.rejection-form {
-  padding: 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  margin-top: 12px;
-}
-
-.rejection-form textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #fca5a5;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  margin-bottom: 10px;
-  resize: vertical;
-}
-
-.rejection-form textarea:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.rejection-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.btn-confirm-reject {
-  padding: 10px 14px;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.btn-confirm-reject:hover {
-  background: #991b1b;
-}
-
-.btn-cancel-reject {
-  padding: 10px 14px;
-  background: #9ca3af;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.btn-cancel-reject:hover {
-  background: #6b7280;
-}
-
-.no-pending {
-  text-align: center;
-  color: #64748b;
-  padding: 20px;
-  font-style: italic;
-}
-
-.interview-status {
-  font-size: 0.9rem;
-  color: #0c3c5c;
-}
-
-.status-scheduled {
-  color: #2563eb;
-  font-weight: 600;
-}
-
-.status-pending_decision {
-  color: #d97706;
-  font-weight: 600;
-}
-
-.status-completed {
-  color: #22c55e;
-  font-weight: 600;
-}
-
-.status-cancelled {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-/* Feedback Section */
-.feedback-section {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-}
-
-/* Form Styling */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-  font-size: 0.95rem;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 12px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: all 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-hint {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: rgba(59, 130, 246, 0.1);
-  border-left: 3px solid #3b82f6;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #0c3c5c;
-}
-
-.btn-schedule,
-.btn-feedback {
-  padding: 14px 24px;
-  font-weight: 600;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-}
-
-.btn-schedule {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-}
-
-.btn-schedule:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
-}
-
-.btn-feedback {
-  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-  color: white;
-}
-
-.btn-feedback:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(168, 85, 247, 0.3);
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.empty-state p {
-  font-size: 1.1rem;
-  color: #64748b;
-}
-
-@media (max-width: 768px) {
-  .interview-container {
-    padding: 16px 12px;
-  }
-
-  .interview-section {
-    padding: 20px 16px;
-  }
-
-  .search-box {
-    flex-direction: column;
-  }
-
-  .candidates-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .candidate-card {
-    padding: 16px;
-  }
-}
+.interview-page { width: 100%; max-width: 1200px; }
+
+.iv-search { position: relative; display: flex; align-items: center; }
+.iv-search svg { position: absolute; left: 0.7rem; width: 16px; height: 16px; color: var(--ink-400); pointer-events: none; }
+.iv-search input { width: 150px; padding-left: 2.2rem; height: 42px; }
+.ht-page-actions button { height: 42px; }
+
+/* Pending decisions */
+.iv-decisions { animation: ht-fade-up var(--dur-3) var(--ease) both; }
+.iv-decisions h3 { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+.iv-decision-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
+.iv-decision-card {
+	padding: var(--space-5);
+	border-radius: var(--radius-lg);
+	background: linear-gradient(160deg, #fffbeb, #ffffff 60%);
+	border: 1px solid #fde68a;
+	box-shadow: var(--shadow-sm);
+}
+.iv-decision-top { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+.iv-decision-top strong { display: block; color: var(--ink-900); }
+.iv-decision-round { font-size: var(--text-xs); color: var(--ink-500); }
+.iv-decision-top .ht-pill { margin-left: auto; }
+.iv-feedback { font-size: var(--text-sm); color: var(--ink-600); background: var(--surface); border: 1px solid var(--ink-200); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); }
+.iv-decision-btns { display: flex; gap: 0.5rem; }
+.iv-decision-btns button { flex: 1; }
+.iv-reject-form { display: flex; flex-direction: column; gap: 0.5rem; }
+.iv-reject-btns { display: flex; gap: 0.5rem; }
+.iv-reject-btns button { flex: 1; }
+
+/* Candidates + panel */
+.iv-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-4); align-items: start; }
+.iv-candidates h3, .iv-panel h3 { font-size: var(--text-lg); }
+.iv-candidates h3 { margin: 0 0 var(--space-4); }
+.iv-candidate-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.iv-candidate {
+	display: flex; align-items: center; gap: var(--space-3);
+	padding: var(--space-3) var(--space-4);
+	text-align: left;
+	background: var(--surface); border: 1px solid var(--ink-200); border-radius: var(--radius-md);
+	box-shadow: none; color: inherit;
+	transition: border-color var(--dur-2) var(--ease), transform var(--dur-1) var(--ease), background var(--dur-2) var(--ease);
+}
+.iv-candidate:hover { border-color: var(--brand-300); transform: translateX(2px); box-shadow: none; filter: none; }
+.iv-candidate:active { transform: scale(0.985); transition: transform var(--dur-1) ease-out; }
+.iv-candidate.active { border-color: var(--brand-500); background: var(--brand-50); }
+.iv-candidate-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.iv-candidate-info strong { color: var(--ink-900); font-size: var(--text-sm); }
+.iv-candidate-info span { font-size: var(--text-xs); color: var(--ink-500); }
+.iv-candidate-rounds { font-size: var(--text-xs); font-weight: 700; color: var(--brand-600); background: var(--brand-50); padding: 0.2rem 0.5rem; border-radius: var(--radius-pill); }
+
+.iv-panel-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.iv-panel-head h3 { margin: 0; }
+.iv-panel-head p { margin: 0; font-size: var(--text-sm); color: var(--ink-500); }
+
+.iv-rounds { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: var(--space-5); }
+.iv-round { display: flex; align-items: center; gap: 0.6rem; padding: var(--space-3); background: var(--surface-subtle); border-radius: var(--radius-md); }
+.iv-round-name { font-family: var(--font-display); font-weight: 700; color: var(--ink-800); min-width: 32px; }
+.iv-round-when { margin-left: auto; font-size: var(--text-xs); color: var(--ink-400); }
+
+.iv-schedule h4, .iv-feedback-card h3 { margin: 0 0 var(--space-3); }
+.iv-schedule { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--ink-100); }
+.iv-field { display: grid; gap: 0.4rem; }
+.iv-schedule button, .iv-feedback-form button { margin-top: var(--space-2); }
+
+.iv-panel-empty { text-align: center; padding: var(--space-8) var(--space-4); color: var(--ink-500); }
+.iv-panel-empty .ht-empty-mark { margin: 0 auto var(--space-3); width: 46px; height: 46px; }
+
+.iv-feedback-card { max-width: 640px; }
+.iv-feedback-sub { margin: 0 0 var(--space-4); font-size: var(--text-sm); color: var(--ink-500); }
+.iv-feedback-form { display: flex; flex-direction: column; gap: var(--space-3); }
+
+@media (max-width: 900px) { .iv-layout { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .ht-page-head { flex-direction: column; align-items: stretch; } .iv-search input { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .iv-decisions, .iv-candidate { animation: none; } }
+
+.iv-picker { margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--ink-100); }

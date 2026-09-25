@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./auth.css";
 import "./Login.css";
+import { useToast } from "../../components/Toast/ToastContext";
 
 import {
   candidateLogin,
@@ -10,6 +12,7 @@ import {
 
 function Login() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [role, setRole] = useState("candidate"); // ✅ FIX
   const [companyLoginType, setCompanyLoginType] = useState("owner");
@@ -26,13 +29,13 @@ function Login() {
   };
 
   const getRedirectPath = (normalizedRole) => {
-    if (normalizedRole === "CANDIDATE") return "/jobs";
-    if (normalizedRole === "DELIVERY") return "/company/create-job";
-    if (normalizedRole === "TFG") return "/company/jobs";
-    if (normalizedRole === "TAG") return "/company/jobs";
-    if (normalizedRole === "ADMIN") return "/company/role-access";
+    if (normalizedRole === "CANDIDATE") return "/dashboard";
+    if (normalizedRole === "DELIVERY") return "/company/dashboard";
+    if (normalizedRole === "TFG") return "/company/dashboard";
+    if (normalizedRole === "TAG") return "/company/dashboard";
+    if (normalizedRole === "ADMIN") return "/company/dashboard";
 
-    return role === "candidate" ? "/jobs" : "/company/create-job";
+    return role === "candidate" ? "/dashboard" : "/company/dashboard";
   };
 
   const resolveLoginData = (responseData) => {
@@ -107,12 +110,12 @@ function Login() {
       const normalizedRole = normalizeRole(loginData.role, role, companyLoginType);
 
       if (!loginData.success) {
-        alert(loginData.message || "Login failed");
+        toast.error(loginData.message || "Login failed");
         return;
       }
 
       if (role === "company" && companyLoginType === "employee" && !normalizedRole) {
-        alert("Employee role not returned by backend. Please check employee login API response.");
+        toast.error("Employee role not returned by the server. Check the employee login response.");
         return;
       }
 
@@ -158,71 +161,113 @@ function Login() {
         localStorage.setItem("token", loginData.token);
       }
 
-      alert(loginData.message);
+      toast.success(loginData.message || "Signed in successfully");
       navigate(getRedirectPath(normalizedRole));
 
     } catch (err) {
       console.log(err);
-      alert("Login failed");
+      toast.error("Login failed. Please check your credentials.");
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
+    <div className="auth-shell">
+      <aside className="auth-aside">
+        <div className="auth-brand">HireTrack</div>
 
-      <form onSubmit={handleLogin}>
-        <select
-          value={role}
-          onChange={(e) => {
-            const selectedRole = e.target.value;
-            setRole(selectedRole);
-            if (selectedRole !== "company") {
-              setCompanyLoginType("owner");
-            }
-          }}
-        >
-          <option value="candidate">Candidate</option>
-          <option value="company">Company</option>
-        </select>
+        <div className="auth-hero">
+          <h1>Hiring, tracked end to end.</h1>
+          <p>
+            From the first application to the signed offer — one workspace for
+            candidates and hiring teams.
+          </p>
+        </div>
 
-        {role === "company" && (
-          <select
-            value={companyLoginType}
-            onChange={(e) => setCompanyLoginType(e.target.value)}
-          >
-            <option value="owner">Company Admin Login</option>
-            <option value="employee">Company Employee Login (DELIVERY/TFG/TAG)</option>
-          </select>
-        )}
+        <ul className="auth-points">
+          <li>Post roles and review applicants in one place</li>
+          <li>Schedule interviews and capture feedback</li>
+          <li>Send, track, and close offers</li>
+        </ul>
+      </aside>
 
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <main className="auth-main">
+        <div className="auth-card">
+          <span className="auth-eyebrow">Welcome back</span>
+          <h2>Sign in</h2>
+          <p className="auth-sub">Access your candidate or company workspace.</p>
 
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <form className="auth-form" onSubmit={handleLogin}>
+            <div className="auth-field">
+              <label htmlFor="login-role">I am a</label>
+              <select
+                id="login-role"
+                value={role}
+                onChange={(e) => {
+                  const selectedRole = e.target.value;
+                  setRole(selectedRole);
+                  if (selectedRole !== "company") {
+                    setCompanyLoginType("owner");
+                  }
+                }}
+              >
+                <option value="candidate">Candidate</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
 
-        <button type="submit">Login</button>
-      </form>
+            {role === "company" && (
+              <div className="auth-field">
+                <label htmlFor="login-type">Login as</label>
+                <select
+                  id="login-type"
+                  value={companyLoginType}
+                  onChange={(e) => setCompanyLoginType(e.target.value)}
+                >
+                  <option value="owner">Company Admin</option>
+                  <option value="employee">Company Employee (Delivery / TFG / TAG)</option>
+                </select>
+              </div>
+            )}
 
-      {/* ✅ Buttons outside form */}
-      <div className="signup-buttons">
-        <button onClick={() => navigate("/signup")}>
-          Candidate Signup
-        </button>
+            <div className="auth-field">
+              <label htmlFor="login-email">Email</label>
+              <input
+                id="login-email"
+                type="email"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
 
-        <button onClick={() => navigate("/company-signup")}>
-          Company Signup
-        </button>
-      </div>
+            <div className="auth-field">
+              <label htmlFor="login-password">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button type="submit">Sign in</button>
+          </form>
+
+          <div className="auth-divider">New here</div>
+
+          <div className="auth-alt">
+            <button type="button" onClick={() => navigate("/signup")}>
+              Create a candidate account
+            </button>
+            <button type="button" onClick={() => navigate("/company-signup")}>
+              Register your company
+            </button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
