@@ -36,12 +36,23 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
                 environment.getProperty("SPRING_DATASOURCE_URL"),
                 environment.getProperty("DATABASE_URL"));
 
+        // Startup diagnostics: report whether the DB URL env var was found,
+        // masking any credentials. This shows up in the Render deploy logs and
+        // makes "connection refused to localhost" (i.e. env var missing) easy
+        // to diagnose without exposing the password.
+        System.out.println("[db-url-init] SPRING_DATASOURCE_URL present=" 
+                + StringUtils.hasText(environment.getProperty("SPRING_DATASOURCE_URL"))
+                + ", DATABASE_URL present="
+                + StringUtils.hasText(environment.getProperty("DATABASE_URL"))
+                + ", resolved=" + mask(raw));
+
         if (!StringUtils.hasText(raw) || raw.startsWith("jdbc:")) {
             // Nothing to normalize (unset, or already a JDBC URL).
             return;
         }
 
         if (!raw.startsWith("postgres://") && !raw.startsWith("postgresql://")) {
+            System.out.println("[db-url-init] value is not a postgres:// URL; leaving as-is");
             return;
         }
 
@@ -66,9 +77,20 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             }
         }
 
+        System.out.println("[db-url-init] converted to JDBC url=" + mask(jdbcUrl));
+
         // Highest precedence so it overrides the placeholder defaults.
         environment.getPropertySources()
                 .addFirst(new MapPropertySource("renderDatabaseUrl", props));
+    }
+
+    /** Masks credentials in a URL so it is safe to log. */
+    private static String mask(String url) {
+        if (!StringUtils.hasText(url)) {
+            return "<empty>";
+        }
+        // Replace anything between "//" and "@" (the user:password segment).
+        return url.replaceAll("//[^@/]+@", "//***:***@");
     }
 
     /**
