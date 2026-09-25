@@ -1,0 +1,32 @@
+# Render Blueprint for the Job Portal backend (Spring Boot monolith + PostgreSQL)
+# Docs: https://render.com/docs/blueprint-spec
+databases:
+  - name: jobportal-db
+    databaseName: hiringapplication
+    user: jobportal
+    plan: free
+
+services:
+  - type: web
+    name: jobportal-backend
+    runtime: docker
+    plan: free
+    # Build the Docker image from the monolith module
+    rootDir: backned/monolith
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      # Spring reads SPRING_DATASOURCE_URL; build the JDBC URL from the
+      # managed Postgres connection properties.
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: jobportal-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: jobportal-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: jobportal-db
+          property: password
