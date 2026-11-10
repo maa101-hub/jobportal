@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Guard from "./Guard";
 
+import Landing from "../pages/Landing";
 import CandidateOffers from "../pages/candidate/CandidateOffers";
 import CompanySignup from "../pages/auth/CompanySignup";
 import Login from "../pages/auth/Login";
@@ -31,8 +32,10 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing — full-bleed, no guard */}
+        <Route path="/" element={<Landing />} />
+
         {/* Auth — full-bleed, no chrome, no guard */}
-        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<CandidateSignup />} />
         <Route path="/company-signup" element={<CompanySignup />} />
