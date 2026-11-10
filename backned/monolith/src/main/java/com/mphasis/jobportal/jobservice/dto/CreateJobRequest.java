@@ -1,15 +1,27 @@
 package com.mphasis.jobportal.jobservice.dto;
 
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+
 public class CreateJobRequest {
 
+    @NotBlank(message = "Job title is required")
     private String title;
+
+    @NotBlank(message = "Job description is required")
     private String description;
+
     private String techStack;
     private String experience;
     private String location;
     private Double salary;
+
+    @NotNull(message = "Company ID is required")
     private Long companyId;
+
+    @NotNull(message = "Created by ID is required")
     private Long createdBy;
     private Integer openings;
     private String deadline;

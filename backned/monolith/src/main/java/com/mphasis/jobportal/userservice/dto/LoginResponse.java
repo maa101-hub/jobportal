@@ -7,6 +7,7 @@ public class LoginResponse {
     private String role;
     private Long companyId;
     private String email;
+    private String token;
 
     public LoginResponse() {}
 
@@ -17,6 +18,11 @@ public class LoginResponse {
         this.role = role;
         this.companyId = companyId;
         this.email = email;
+    }
+
+    public LoginResponse(boolean success, String message, Long userId, String role, Long companyId, String email, String token) {
+        this(success, message, userId, role, companyId, email);
+        this.token = token;
     }
 
     public boolean isSuccess() { return success; }
@@ -36,4 +42,7 @@ public class LoginResponse {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 }

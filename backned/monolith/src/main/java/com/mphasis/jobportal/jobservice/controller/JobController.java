@@ -8,6 +8,9 @@ import com.mphasis.jobportal.jobservice.dto.CreateJobRequest;
 import com.mphasis.jobportal.jobservice.model.Job;
 import com.mphasis.jobportal.jobservice.service.JobService;
 
+import jakarta.validation.Valid;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -16,7 +19,7 @@ public class JobController {
     private JobService jobService;
 
     @PostMapping
-    public String createJob(@RequestBody CreateJobRequest request) {
+    public String createJob(@Valid @RequestBody CreateJobRequest request) {
         return jobService.createJob(request);
     }
 
@@ -33,6 +36,16 @@ public class JobController {
     @GetMapping("/{jobId}")
     public Job getJobById(@PathVariable Long jobId) {
         return jobService.getJobById(jobId);
+    }
+
+    @PutMapping("/{jobId}")
+    public String updateJob(@PathVariable Long jobId, @Valid @RequestBody CreateJobRequest request) {
+        return jobService.updateJob(jobId, request);
+    }
+
+    @DeleteMapping("/{jobId}")
+    public String deleteJob(@PathVariable Long jobId) {
+        return jobService.deleteJob(jobId);
     }
 
     @PutMapping("/{jobId}/approve/{approvedBy}")

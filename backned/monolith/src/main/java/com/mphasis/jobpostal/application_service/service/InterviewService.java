@@ -3,12 +3,17 @@ package com.mphasis.jobpostal.application_service.service;
 import com.mphasis.jobpostal.application_service.dto.InterviewRequest;
 import com.mphasis.jobpostal.application_service.entity.Interview;
 import com.mphasis.jobpostal.application_service.repository.InterviewRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class InterviewService {
+
+    private static final Logger log = LoggerFactory.getLogger(InterviewService.class);
 
     private final InterviewRepository repository;
     private final ApplicationService applicationService;
@@ -19,6 +24,7 @@ public class InterviewService {
     }
 
     // ✅ Schedule Interview
+    @Transactional
     public Interview schedule(InterviewRequest request) {
         Interview interview = new Interview();
         interview.setApplicationId(request.getApplicationId());
@@ -36,7 +42,7 @@ public class InterviewService {
                     "INTERVIEW_SCHEDULED"
             );
         } catch (Exception e) {
-            System.err.println("Error updating application status: " + e.getMessage());
+            log.error("Error updating application status: {}", e.getMessage());
         }
 
         return saved;
@@ -64,6 +70,7 @@ public class InterviewService {
     }
 
     // ✅ Company decides to OFFER the candidate
+    @Transactional
     public Interview offerCandidate(Long id) {
         Interview interview = getById(id);
         interview.setStatus("COMPLETED");
@@ -78,13 +85,14 @@ public class InterviewService {
                     "OFFERED"
             );
         } catch (Exception e) {
-            System.err.println("Error updating application status: " + e.getMessage());
+            log.error("Error updating application status: {}", e.getMessage());
         }
 
         return saved;
     }
 
     // ✅ Company decides to REJECT the candidate
+    @Transactional
     public Interview rejectCandidate(Long id, String reason) {
         Interview interview = getById(id);
         interview.setStatus("COMPLETED");
@@ -100,13 +108,14 @@ public class InterviewService {
                     "REJECTED"
             );
         } catch (Exception e) {
-            System.err.println("Error updating application status: " + e.getMessage());
+            log.error("Error updating application status: {}", e.getMessage());
         }
 
         return saved;
     }
 
     // ✅ Cancel interview
+    @Transactional
     public void cancelInterview(Long id) {
         Interview interview = getById(id);
         interview.setStatus("CANCELLED");
@@ -120,7 +129,7 @@ public class InterviewService {
                     "SHORTLISTED"
             );
         } catch (Exception e) {
-            System.err.println("Error reverting application status: " + e.getMessage());
+            log.error("Error reverting application status: {}", e.getMessage());
         }
     }
     public Interview completeInterview(Long id) {

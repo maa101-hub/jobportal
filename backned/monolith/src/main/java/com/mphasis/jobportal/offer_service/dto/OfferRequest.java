@@ -1,9 +1,11 @@
 package com.mphasis.jobportal.offer_service.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class OfferRequest {
 
+    @NotNull(message = "Application ID is required")
     private Long applicationId;
     private LocalDate joiningDate;
 

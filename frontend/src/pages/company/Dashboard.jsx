@@ -115,18 +115,17 @@ function Dashboard() {
 				["APPROVED", "OPEN"].includes(String(j.status).toUpperCase())
 			).length;
 
-			// Applications per job (best-effort, tolerant of failures).
+			// Applications per job — single batch request instead of N+1.
 			const jobIds = jobs.map((j) => j?.id).filter(Boolean);
 			let apps = [];
 			let appsFailed = false;
 			if (jobIds.length) {
-				const results = await Promise.allSettled(
-					jobIds.map((id) => applicationService.getApplicationsByJob(id))
-				);
-				results.forEach((r) => {
-					if (r.status === "fulfilled") apps = apps.concat(normalizeList(r.value.data));
-					else appsFailed = true;
-				});
+				try {
+					const appsRes = await applicationService.getApplicationsByJobIds(jobIds);
+					apps = normalizeList(appsRes.data);
+				} catch {
+					appsFailed = true;
+				}
 			}
 
 			// Derive pipeline distribution + interview/offer counts from statuses.

@@ -1,9 +1,15 @@
 package com.mphasis.jobpostal.application_service.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class ApplicationRequest {
 
+    @NotNull(message = "User ID is required")
     private Long userId;
+
+    @NotNull(message = "Job ID is required")
     private Long jobId;
+
     private String resumeUrl;
 
     public Long getUserId() { return userId; }

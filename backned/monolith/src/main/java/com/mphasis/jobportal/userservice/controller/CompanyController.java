@@ -11,6 +11,8 @@ import com.mphasis.jobportal.userservice.dto.LoginResponse;
 import com.mphasis.jobportal.userservice.model.CompanyEmployee;
 import com.mphasis.jobportal.userservice.service.CompanyService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/companies")
 public class CompanyController {
@@ -19,23 +21,23 @@ public class CompanyController {
     private CompanyService companyService;
 
     @PostMapping("/register")
-    public String register(@RequestBody CompanyRegisterRequest request) {
+    public String register(@Valid @RequestBody CompanyRegisterRequest request) {
         return companyService.registerCompany(request);
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return companyService.companyLogin(request);
     }
 
     // NEW: employee login (DELIVERY/TFG/TAG/ADMIN employees)
     @PostMapping("/employees/login")
-    public LoginResponse employeeLogin(@RequestBody LoginRequest request) {
+    public LoginResponse employeeLogin(@Valid @RequestBody LoginRequest request) {
         return companyService.employeeLogin(request);
     }
 
     @PostMapping("/{companyId}/employees")
-    public String addEmployee(@PathVariable Long companyId, @RequestBody EmployeeRequest request) {
+    public String addEmployee(@PathVariable Long companyId, @Valid @RequestBody EmployeeRequest request) {
         return companyService.addEmployee(companyId, request);
     }
 

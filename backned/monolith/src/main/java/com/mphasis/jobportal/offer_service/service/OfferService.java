@@ -3,6 +3,7 @@ package com.mphasis.jobportal.offer_service.service;
 import com.mphasis.jobportal.offer_service.entity.Offer;
 import com.mphasis.jobportal.offer_service.repository.OfferRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -15,6 +16,7 @@ public class OfferService {
         this.repository = repository;
     }
 
+    @Transactional
     public Offer createOffer(Long applicationId, LocalDate joiningDate) {
 
         Offer offer = new Offer();
@@ -31,6 +33,7 @@ public class OfferService {
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
     }
 
+    @Transactional
     public Offer acceptOffer(Long id) {
         Offer offer = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
@@ -40,6 +43,7 @@ public class OfferService {
     }
 
  // OfferService
+    @Transactional
     public Offer rejectOffer(Long id) {
         Offer offer = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
@@ -47,6 +51,7 @@ public class OfferService {
         return repository.save(offer);
     }
 
+    @Transactional
     public Offer markJoined(Long id, String joiningDate) {
         Offer offer = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));

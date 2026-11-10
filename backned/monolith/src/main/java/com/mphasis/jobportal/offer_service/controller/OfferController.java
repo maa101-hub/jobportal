@@ -5,6 +5,8 @@ import com.mphasis.jobportal.offer_service.entity.Offer;
 import com.mphasis.jobportal.offer_service.service.OfferService;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/offers")
 public class OfferController {
@@ -16,7 +18,7 @@ public class OfferController {
     }
 
     @PostMapping
-    public Offer createOffer(@RequestBody OfferRequest request) {
+    public Offer createOffer(@Valid @RequestBody OfferRequest request) {
         return service.createOffer(
                 request.getApplicationId(),
                 request.getJoiningDate()

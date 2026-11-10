@@ -5,6 +5,7 @@ import com.mphasis.jobpostal.application_service.entity.Interview;
 import com.mphasis.jobpostal.application_service.service.InterviewService;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -19,7 +20,7 @@ public class InterviewController {
 
     // ✅ Schedule Interview
     @PostMapping
-    public Interview schedule(@RequestBody InterviewRequest request) {
+    public Interview schedule(@Valid @RequestBody InterviewRequest request) {
         return service.schedule(request);
     }
 

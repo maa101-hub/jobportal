@@ -36,11 +36,31 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response) {
+      const data = error.response.data;
+      const serverMessage =
+        data?.message ||
+        (data?.fieldErrors ? Object.values(data.fieldErrors)[0] : null);
       console.error(
-        `[API Error] ${error.response.status}: ${error.response.data?.message || error.message}`
+        `[API Error] ${error.response.status}: ${serverMessage || error.message}`
       );
+      // Attach the server message so page-level catch blocks can show it.
+      error.userMessage = serverMessage || `Request failed (${error.response.status})`;
+
+      // On 401 (auth expired or missing token), clear stale session and
+      // redirect to login so the user isn't stuck on a broken page.
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("companyId");
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
+        }
+      }
     } else {
       console.error("[API Error] Network error:", error.message);
+      error.userMessage = "Network error — please check your connection.";
     }
     return Promise.reject(error);
   }
@@ -79,6 +99,8 @@ export const applicationService = {
   getApplicationsByUser: (userId) => api.get(`/applications/user/${userId}`),
   getAllApplications: () => api.get("/applications"),
   getApplicationsByJob: (jobId) => api.get(`/applications/job/${jobId}`),
+  getApplicationsByJobIds: (jobIds) =>
+    api.get(`/applications/batch?jobIds=${jobIds.join(",")}`),
   updateApplicationStatus: (id, status) =>
     api.put(`/applications/${id}/status?status=${status}`),
   scheduleInterview: (interviewData) => api.post("/interviews", interviewData),

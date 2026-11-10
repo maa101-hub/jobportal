@@ -63,7 +63,7 @@ function AddTeamMember() {
 			if (ok) setTimeout(() => navigate("/company/team"), 900);
 		} catch (err) {
 			console.log(err);
-			setMessage({ type: "error", text: "Couldn't add team member." });
+			setMessage({ type: "error", text: err.userMessage || "Couldn't add team member." });
 		} finally {
 			setSubmitting(false);
 		}

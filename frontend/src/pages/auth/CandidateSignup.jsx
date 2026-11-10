@@ -34,7 +34,7 @@ function CandidateSignup() {
       }
     } catch (err) {
       console.log(err);
-      toast.error("Signup failed. That email may already be registered.");
+      toast.error(err.userMessage || "Signup failed. That email may already be registered.");
     }
   };
 

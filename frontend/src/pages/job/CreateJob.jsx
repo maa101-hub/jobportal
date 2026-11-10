@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CreateJob.css";
 
 import { createJob } from "../../services/endpoints";
-import { getRole, getCompanyId } from "../../utils/helpers";
+import { getRole, getCompanyId, getUser } from "../../utils/helpers";
 
 const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
 
@@ -11,6 +11,8 @@ function CreateJob() {
 	const navigate = useNavigate();
 	const role = getRole();
 	const companyId = getCompanyId();
+	const user = useMemo(() => getUser(), []);
+	const createdBy = user?.id ?? Number(localStorage.getItem("userId"));
 
 	const [form, setForm] = useState({
 		// Persisted to backend
@@ -53,6 +55,7 @@ function CreateJob() {
 			techStack: form.skills || form.techStack,
 			experience: form.experience,
 			companyId,
+			createdBy,
 			salary: form.salary ? Number(String(form.salary).replace(/[^0-9.]/g, "")) || null : null,
 			openings: form.openings ? Number(form.openings) : null,
 			deadline: form.deadline || null,

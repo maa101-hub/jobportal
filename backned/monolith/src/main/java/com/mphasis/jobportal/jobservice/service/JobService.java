@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mphasis.jobportal.jobservice.dto.CreateJobRequest;
 import com.mphasis.jobportal.jobservice.model.Job;
@@ -17,6 +18,7 @@ public class JobService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Transactional
     public String createJob(CreateJobRequest request) {
 
         Job job = new Job();
@@ -62,7 +64,7 @@ public class JobService {
         Optional<Job> optional = jobRepository.findById(jobId);
 
         if(optional.isEmpty()) {
-            return "Job Not Found";
+            throw new RuntimeException("Job Not Found");
         }
 
         Job job = optional.get();
@@ -80,7 +82,7 @@ public class JobService {
         Optional<Job> optional = jobRepository.findById(jobId);
 
         if(optional.isEmpty()) {
-            return "Job Not Found";
+            throw new RuntimeException("Job Not Found");
         }
 
         Job job = optional.get();
@@ -99,7 +101,7 @@ public class JobService {
         Optional<Job> optional = jobRepository.findById(jobId);
 
         if (optional.isEmpty()) {
-            return "Job Not Found";
+            throw new RuntimeException("Job Not Found");
         }
 
         Job job = optional.get();
@@ -107,5 +109,35 @@ public class JobService {
         jobRepository.save(job);
 
         return "Job Rejected Successfully";
+    }
+
+    @Transactional
+    public String updateJob(Long jobId, CreateJobRequest request) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found with ID: " + jobId));
+
+        job.setTitle(request.getTitle());
+        job.setDescription(request.getDescription());
+        job.setTechStack(request.getTechStack());
+        job.setExperience(request.getExperience());
+        job.setLocation(request.getLocation());
+        job.setSalary(request.getSalary());
+        job.setOpenings(request.getOpenings());
+        job.setDeadline(request.getDeadline());
+        job.setResponsibilities(request.getResponsibilities());
+        job.setRequirements(request.getRequirements());
+        job.setAssignedTag(request.getAssignedTag());
+
+        jobRepository.save(job);
+        return "Job Updated Successfully";
+    }
+
+    @Transactional
+    public String deleteJob(Long jobId) {
+        if (!jobRepository.existsById(jobId)) {
+            throw new RuntimeException("Job Not Found");
+        }
+        jobRepository.deleteById(jobId);
+        return "Job Deleted Successfully";
     }
 }

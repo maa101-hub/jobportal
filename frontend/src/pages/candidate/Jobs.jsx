@@ -70,7 +70,7 @@ function Jobs() {
       await fetchApplications();
     } catch (err) {
       console.log(err);
-      toast.error("Couldn't submit your application.");
+      toast.error(err.userMessage || "Couldn't submit your application.");
     }
   };
 

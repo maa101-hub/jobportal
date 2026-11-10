@@ -39,7 +39,7 @@ function CompanySignup() {
       }
     } catch (err) {
       console.log(err);
-      toast.error("Company signup failed. That email may already exist.");
+      toast.error(err.userMessage || "Company signup failed. That email may already exist.");
     }
   };
 
