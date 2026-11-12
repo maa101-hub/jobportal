@@ -10,6 +10,7 @@ import com.mphasis.jobportal.userservice.dto.LoginRequest;
 import com.mphasis.jobportal.userservice.dto.LoginResponse;
 import com.mphasis.jobportal.userservice.model.CompanyEmployee;
 import com.mphasis.jobportal.userservice.service.CompanyService;
+import com.mphasis.hiringtracker.config.AuthContext;
 
 import jakarta.validation.Valid;
 
@@ -37,17 +38,24 @@ public class CompanyController {
     }
 
     @PostMapping("/{companyId}/employees")
-    public String addEmployee(@PathVariable Long companyId, @Valid @RequestBody EmployeeRequest request) {
+    public String addEmployee(@PathVariable Long companyId, @Valid @RequestBody EmployeeRequest request,
+                              jakarta.servlet.http.HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "ADMIN");
+        AuthContext.requireCompany(httpRequest, companyId);
         return companyService.addEmployee(companyId, request);
     }
 
     @GetMapping("/{companyId}/employees")
-    public List<CompanyEmployee> getEmployees(@PathVariable Long companyId) {
+    public List<CompanyEmployee> getEmployees(@PathVariable Long companyId,
+                                              jakarta.servlet.http.HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "ADMIN", "DELIVERY", "TFG", "TAG");
+        AuthContext.requireCompany(httpRequest, companyId);
         return companyService.getEmployees(companyId);
     }
 
     @DeleteMapping("/employees/{employeeId}")
-    public String deleteEmployee(@PathVariable Long employeeId) {
-        return companyService.deleteEmployee(employeeId);
+    public String deleteEmployee(@PathVariable Long employeeId, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "ADMIN");
+        return companyService.deleteEmployee(employeeId, AuthContext.requireCompanyId(httpRequest));
     }
 }

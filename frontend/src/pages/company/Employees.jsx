@@ -45,7 +45,8 @@ function TeamMembers() {
 	}, [companyId]);
 
 	useEffect(() => {
-		fetchMembers();
+		const timer = setTimeout(() => { void fetchMembers(); }, 0);
+		return () => clearTimeout(timer);
 	}, [fetchMembers]);
 
 	const confirmDelete = async () => {

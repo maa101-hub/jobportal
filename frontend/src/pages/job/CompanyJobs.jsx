@@ -59,7 +59,8 @@ function CompanyJobs() {
 	}, [role, companyId]);
 
 	useEffect(() => {
-		fetchJobs();
+		const timer = setTimeout(() => { void fetchJobs(); }, 0);
+		return () => clearTimeout(timer);
 	}, [fetchJobs]);
 
 	const handleApprove = async (jobId) => {

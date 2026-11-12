@@ -10,7 +10,7 @@ RUN mvn -B -q dependency:go-offline
 
 # Build the application
 COPY src ./src
-RUN mvn -B -q clean package -DskipTests
+RUN mvn -B -q clean package
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:17-jre

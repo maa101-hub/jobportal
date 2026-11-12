@@ -37,6 +37,16 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(AuthContext.UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorized(AuthContext.UnauthorizedException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(AuthContext.ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleForbidden(AuthContext.ForbiddenException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+    }
+
     /** Bean Validation failure on a @RequestBody @Valid param. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {

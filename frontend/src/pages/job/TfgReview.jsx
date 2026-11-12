@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./TfgReview.css";
 
 import { jobService } from "../../services/api";
-import { normalizeList, getUser, getRole } from "../../utils/helpers";
+import { normalizeList, getUser } from "../../utils/helpers";
 import ConfirmDialog from "../../components/Toast/ConfirmDialog";
 
 /* TFG Review — the approval gate. Lists jobs awaiting review (status CREATED)
@@ -12,9 +11,7 @@ import ConfirmDialog from "../../components/Toast/ConfirmDialog";
    (no reject endpoint on jobs today). */
 
 function TfgReview() {
-	const navigate = useNavigate();
 	const user = useMemo(() => getUser(), []);
-	const role = getRole();
 
 	const [jobs, setJobs] = useState([]);
 	const [selectedId, setSelectedId] = useState(null);
@@ -39,7 +36,8 @@ function TfgReview() {
 	}, []);
 
 	useEffect(() => {
-		fetchQueue();
+		const timer = setTimeout(() => { void fetchQueue(); }, 0);
+		return () => clearTimeout(timer);
 	}, [fetchQueue]);
 
 	const selected = jobs.find((j) => j.id === selectedId) || null;

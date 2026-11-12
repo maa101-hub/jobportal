@@ -90,7 +90,10 @@ public class JwtAuthFilter {
             if (claims != null) {
                 // Valid token — attach user context to the request.
                 request.setAttribute(AUTH_USER_ID, jwtUtil.getUserId(claims));
-                request.setAttribute(AUTH_ROLE, jwtUtil.getRole(claims));
+                // Candidate records historically use USER in the database; expose
+                // the product-level role expected by every protected controller.
+                String role = jwtUtil.getRole(claims);
+                request.setAttribute(AUTH_ROLE, "USER".equals(role) ? "CANDIDATE" : role);
                 request.setAttribute(AUTH_COMPANY_ID, jwtUtil.getCompanyId(claims));
                 chain.doFilter(request, response);
                 return;

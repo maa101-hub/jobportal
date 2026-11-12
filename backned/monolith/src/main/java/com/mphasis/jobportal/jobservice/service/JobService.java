@@ -50,6 +50,10 @@ public class JobService {
         return jobRepository.findAll();
     }
 
+    public List<Job> getPublishedJobs() {
+        return jobRepository.findByStatusIn(List.of(JobStatus.APPROVED, JobStatus.OPEN));
+    }
+
     public Job getJobById(Long jobId) {
         return jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found with ID: " + jobId));
@@ -57,6 +61,15 @@ public class JobService {
 
     public List<Job> getCompanyJobs(Long companyId) {
         return jobRepository.findByCompanyId(companyId);
+    }
+
+    public void assertCompanyAccess(Long jobId, Long companyId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job Not Found"));
+        if (!companyId.equals(job.getCompanyId())) {
+            throw new com.mphasis.hiringtracker.config.AuthContext.ForbiddenException(
+                    "You cannot access a job from another company");
+        }
     }
 
     public String approveJob(Long jobId, Long approvedBy) {

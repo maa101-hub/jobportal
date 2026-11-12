@@ -79,6 +79,7 @@ function CompanySignup() {
                 placeholder="Acme Inc."
                 value={form.companyName}
                 onChange={handleChange}
+                required
               />
             </div>
 
@@ -92,6 +93,7 @@ function CompanySignup() {
                 value={form.email}
                 onChange={handleChange}
                 autoComplete="email"
+                required
               />
             </div>
 
@@ -105,6 +107,8 @@ function CompanySignup() {
                 value={form.password}
                 onChange={handleChange}
                 autoComplete="new-password"
+                minLength={6}
+                required
               />
             </div>
 

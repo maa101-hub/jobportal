@@ -47,11 +47,13 @@ function Jobs() {
   }, [userId]);
 
   useEffect(() => {
-    fetchJobs();
+    const timer = setTimeout(() => { void fetchJobs(); }, 0);
+    return () => clearTimeout(timer);
   }, [fetchJobs]);
 
   useEffect(() => {
-    fetchApplications();
+    const timer = setTimeout(() => { void fetchApplications(); }, 0);
+    return () => clearTimeout(timer);
   }, [fetchApplications]);
 
   const hasApplied = (jobId) => {

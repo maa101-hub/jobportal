@@ -143,6 +143,18 @@ public class CompanyService {
         return "Employee Deleted Successfully";
     }
 
+    public String deleteEmployee(Long employeeId, Long requestingCompanyId) {
+        CompanyEmployee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee Not Found"));
+        Long employeeCompanyId = employee.getCompany() != null ? employee.getCompany().getId() : null;
+        if (!requestingCompanyId.equals(employeeCompanyId)) {
+            throw new com.mphasis.hiringtracker.config.AuthContext.ForbiddenException(
+                    "You cannot delete an employee from another company");
+        }
+        employeeRepository.delete(employee);
+        return "Employee Deleted Successfully";
+    }
+
     // ─── Password verification with backward-compatible migration ──────────
 
     private boolean verifyCompanyPassword(String raw, String stored, Company company) {

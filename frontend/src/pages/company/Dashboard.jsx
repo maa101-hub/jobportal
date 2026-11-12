@@ -17,8 +17,8 @@ function useCountUp(value, duration = 900) {
 			window.matchMedia &&
 			window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (reduce || target === 0) {
-			setDisplay(target);
-			return;
+			const snap = requestAnimationFrame(() => setDisplay(target));
+			return () => cancelAnimationFrame(snap);
 		}
 		const start = performance.now();
 		const tick = (now) => {
@@ -64,7 +64,7 @@ const ICONS = {
 function MetricCard({ tone, icon, label, value, note, index, onClick }) {
 	const shown = useCountUp(value);
 	return (
-		<button className={`metric-card tone-${tone}`} style={{ "--i": index }} onClick={onClick}>
+		<button className={`metric-card tone-${tone}${onClick ? "" : " is-disabled"}`} style={{ "--i": index }} onClick={onClick} disabled={!onClick} aria-label={onClick ? `Open ${label}` : `${label} summary`}>
 			<div className="metric-top">
 				<span className="metric-icon" aria-hidden="true">{icon}</span>
 				<span className="metric-arrow" aria-hidden="true">
@@ -82,6 +82,14 @@ function Dashboard() {
 	const navigate = useNavigate();
 	const user = useMemo(() => getUser(), []);
 	const role = getRole();
+	const roleRoutes = useMemo(() => ({
+		jobRequests: role === "TFG" ? "/company/review" : ["DELIVERY", "ADMIN"].includes(role) ? "/company/job-requests" : null,
+		activeJobs: ["DELIVERY", "TFG", "TAG", "ADMIN"].includes(role) ? "/company/jobs" : null,
+		applications: ["TAG", "ADMIN"].includes(role) ? "/company/applications" : null,
+		interviews: ["TAG", "ADMIN"].includes(role) ? "/company/interview" : null,
+		offers: ["TAG", "ADMIN"].includes(role) ? "/company/offers" : null,
+		workQueue: role === "TFG" ? "/company/review" : role === "TAG" ? "/company/applications" : role === "DELIVERY" ? "/company/create-job" : "/company/job-requests",
+	}), [role]);
 	const displayName = (user?.email || "there").split("@")[0];
 	const companyId = getCompanyId();
 
@@ -160,6 +168,41 @@ function Dashboard() {
 
 	const maxStage = Math.max(1, ...PIPELINE_STAGES.map((s) => pipeline[s] || 0));
 
+	const nextActions = useMemo(() => {
+		const actions = [];
+		if (role === "TFG" || role === "ADMIN") {
+			actions.push({
+				label: stats.jobRequests ? `Review ${stats.jobRequests} job request${stats.jobRequests > 1 ? "s" : ""}` : "Review job requests",
+				detail: stats.jobRequests ? "Keep the approval gate moving" : "Nothing is waiting right now",
+				to: role === "TFG" ? "/company/review" : "/company/job-requests",
+				tone: "amber",
+			});
+		}
+		if (role === "TAG" || role === "ADMIN") {
+			actions.push({
+				label: stats.applications ? `Review ${stats.applications} application${stats.applications > 1 ? "s" : ""}` : "Open applications",
+				detail: stats.applications ? "Move candidates to their next stage" : "Applications will appear here",
+				to: "/company/applications",
+				tone: "pink",
+			});
+			actions.push({
+				label: stats.interviews ? `${stats.interviews} interview${stats.interviews > 1 ? "s" : ""} need attention` : "Check interview queue",
+				detail: stats.interviews ? "Capture feedback before the next decision" : "Schedule the next round",
+				to: "/company/interview",
+				tone: "teal",
+			});
+		}
+		if (role === "DELIVERY") {
+			actions.push({
+				label: stats.jobRequests ? "Turn a request into a job" : "Create a new job",
+				detail: "Give the hiring team a clear role to review",
+				to: stats.jobRequests ? "/company/job-requests" : "/company/create-job",
+				tone: "brand",
+			});
+		}
+		return actions;
+	}, [role, stats]);
+
 	const activity = [
 		{
 			tone: "brand", icon: ICONS.requests,
@@ -202,7 +245,7 @@ function Dashboard() {
 					</div>
 					<button
 						className="welcome-cta-btn"
-						onClick={() => navigate(role === "ADMIN" ? "/company/job-requests" : "/company/jobs")}
+						onClick={() => navigate(roleRoutes.workQueue)}
 						aria-label="Go to work queue"
 					>
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -216,11 +259,36 @@ function Dashboard() {
 
 			{/* Metric row */}
 			<section className="dashboard-grid">
-				<MetricCard tone="violet" index={0} icon={ICONS.requests} label="Job Requests" value={stats.jobRequests} note={loading ? "Loading…" : "Awaiting review"} onClick={() => navigate("/company/job-requests")} />
-				<MetricCard tone="brand" index={1} icon={ICONS.jobs} label="Active Jobs" value={stats.activeJobs} note={loading ? "Loading…" : "Open for hiring"} onClick={() => navigate("/company/jobs")} />
-				<MetricCard tone="pink" index={2} icon={ICONS.applications} label="Applications" value={stats.applications} note={loading ? "Loading…" : "Across all roles"} onClick={() => navigate("/company/applications")} />
-				<MetricCard tone="teal" index={3} icon={ICONS.interview} label="Interviews" value={stats.interviews} note={loading ? "Loading…" : "In progress"} onClick={() => navigate("/company/interview")} />
-				<MetricCard tone="green" index={4} icon={ICONS.offers} label="Offers" value={stats.offers} note={loading ? "Loading…" : "Extended"} onClick={() => navigate("/company/offers")} />
+				<MetricCard tone="violet" index={0} icon={ICONS.requests} label="Job Requests" value={stats.jobRequests} note={loading ? "Loading…" : "Awaiting review"} onClick={roleRoutes.jobRequests ? () => navigate(roleRoutes.jobRequests) : undefined} />
+				<MetricCard tone="brand" index={1} icon={ICONS.jobs} label="Active Jobs" value={stats.activeJobs} note={loading ? "Loading…" : "Open for hiring"} onClick={roleRoutes.activeJobs ? () => navigate(roleRoutes.activeJobs) : undefined} />
+				<MetricCard tone="pink" index={2} icon={ICONS.applications} label="Applications" value={stats.applications} note={loading ? "Loading…" : "Across all roles"} onClick={roleRoutes.applications ? () => navigate(roleRoutes.applications) : undefined} />
+				<MetricCard tone="teal" index={3} icon={ICONS.interview} label="Interviews" value={stats.interviews} note={loading ? "Loading…" : "In progress"} onClick={roleRoutes.interviews ? () => navigate(roleRoutes.interviews) : undefined} />
+				<MetricCard tone="green" index={4} icon={ICONS.offers} label="Offers" value={stats.offers} note={loading ? "Loading…" : "Extended"} onClick={roleRoutes.offers ? () => navigate(roleRoutes.offers) : undefined} />
+			</section>
+
+			<section className="next-actions-card" aria-labelledby="next-actions-title">
+				<header className="panel-head">
+					<div className="panel-head-left">
+						<span className="panel-icon next-actions-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /><path d="M5 6v12" /></svg>
+						</span>
+						<div>
+							<h3 id="next-actions-title">Next actions</h3>
+							<p>Keep the hiring workflow moving from one clear queue.</p>
+						</div>
+					</div>
+				</header>
+				{nextActions.length ? (
+					<div className="next-actions-grid">
+						{nextActions.map((action, i) => (
+							<button key={action.to} className="next-action" style={{ "--i": i }} onClick={() => navigate(action.to)}>
+								<span className={`next-action-dot tone-${action.tone}`} aria-hidden="true" />
+								<span className="next-action-copy"><strong>{action.label}</strong><span>{action.detail}</span></span>
+								<svg className="next-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18" /></svg>
+							</button>
+						))}
+					</div>
+				) : <p className="next-actions-empty">Your workspace is ready. New workflow actions will appear here.</p>}
 			</section>
 
 			{/* Pipeline + activity */}

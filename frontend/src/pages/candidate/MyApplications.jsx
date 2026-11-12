@@ -107,7 +107,10 @@ function MyApplications() {
 		}
 	}, [userId, loadInterviews]);
 
-	useEffect(() => { load(false); }, [load]);
+	useEffect(() => {
+		const timer = setTimeout(() => { void load(false); }, 0);
+		return () => clearTimeout(timer);
+	}, [load]);
 
 	const takeInterview = async (interviewId) => {
 		try {

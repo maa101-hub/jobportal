@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import com.mphasis.hiringtracker.config.AuthContext;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/interviews")
@@ -20,19 +22,22 @@ public class InterviewController {
 
     // ✅ Schedule Interview
     @PostMapping
-    public Interview schedule(@Valid @RequestBody InterviewRequest request) {
+    public Interview schedule(@Valid @RequestBody InterviewRequest request, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.schedule(request);
     }
 
     // ✅ Get all interviews for an application
     @GetMapping("/application/{applicationId}")
-    public List<Interview> getByApplication(@PathVariable Long applicationId) {
+    public List<Interview> getByApplication(@PathVariable Long applicationId, HttpServletRequest httpRequest) {
+        AuthContext.requireUserId(httpRequest);
         return service.getByApplication(applicationId);
     }
 
     // ✅ Get interview by ID
     @GetMapping("/{id}")
-    public Interview getById(@PathVariable Long id) {
+    public Interview getById(@PathVariable Long id, HttpServletRequest httpRequest) {
+        AuthContext.requireUserId(httpRequest);
         return service.getById(id);
     }
 
@@ -40,13 +45,15 @@ public class InterviewController {
     @PutMapping("/{id}/feedback")
     public Interview addFeedback(
             @PathVariable Long id,
-            @RequestParam String feedback) {
+            @RequestParam String feedback, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.addFeedback(id, feedback);
     }
 
     // ✅ Company decides to OFFER the candidate
     @PutMapping("/{id}/offer")
-    public Interview offerCandidate(@PathVariable Long id) {
+    public Interview offerCandidate(@PathVariable Long id, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.offerCandidate(id);
     }
 
@@ -54,17 +61,20 @@ public class InterviewController {
     @PutMapping("/{id}/reject")
     public Interview rejectCandidate(
             @PathVariable Long id,
-            @RequestParam(required = false) String reason) {
+            @RequestParam(required = false) String reason, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.rejectCandidate(id, reason);
     }
 
     // ✅ Cancel interview
     @DeleteMapping("/{id}")
-    public void cancelInterview(@PathVariable Long id) {
+    public void cancelInterview(@PathVariable Long id, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         service.cancelInterview(id);
     }
     @PutMapping("/{id}/complete")
-    public Interview completeInterview(@PathVariable Long id) {
+    public Interview completeInterview(@PathVariable Long id, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.completeInterview(id);
     }
 }

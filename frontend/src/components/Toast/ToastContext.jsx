@@ -80,6 +80,8 @@ export function ToastProvider({ children }) {
 
 // Safe hook — returns a no-throw shim if used outside a provider, so pages
 // never crash even if the tree isn't wrapped yet.
+// This module intentionally exports both the provider and its hook.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
 	const ctx = useContext(ToastContext);
 	if (!ctx) {

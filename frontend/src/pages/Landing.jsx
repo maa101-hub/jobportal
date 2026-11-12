@@ -195,8 +195,20 @@ function LiveDashboard() {
   const [screen, setScreen] = useState(0);
   const [variant, setVariant] = useState(0);
   const [animating, setAnimating] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const previewRef = useRef(null);
 
   useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setPrefersReducedMotion(media.matches);
+    sync();
+    media.addEventListener?.("change", sync);
+    return () => media.removeEventListener?.("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (paused || prefersReducedMotion) return undefined;
     const t = setInterval(() => {
       setAnimating(true);
       setTimeout(() => {
@@ -206,11 +218,42 @@ function LiveDashboard() {
       }, 300);
     }, 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [paused, prefersReducedMotion]);
+
+  const handlePointerMove = (event) => {
+    if (paused || prefersReducedMotion || !previewRef.current) return;
+    const rect = previewRef.current.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    previewRef.current.style.setProperty("--tilt-x", `${(y * -3).toFixed(2)}deg`);
+    previewRef.current.style.setProperty("--tilt-y", `${(x * 4).toFixed(2)}deg`);
+    previewRef.current.style.setProperty("--spot-x", `${(x + 0.5) * 100}%`);
+    previewRef.current.style.setProperty("--spot-y", `${(y + 0.5) * 100}%`);
+  };
+
+  const resetPointer = () => {
+    if (!previewRef.current) return;
+    previewRef.current.style.setProperty("--tilt-x", "0deg");
+    previewRef.current.style.setProperty("--tilt-y", "0deg");
+    previewRef.current.style.setProperty("--spot-x", "50%");
+    previewRef.current.style.setProperty("--spot-y", "40%");
+  };
+
+  const changeScreen = (index) => {
+    setScreen(index);
+    setVariant((value) => (value + 1) % METRIC_VARIANTS.length);
+    setAnimating(true);
+    window.setTimeout(() => setAnimating(false), 300);
+  };
 
   return (
     <div className="live-dashboard">
-      <div className="preview-window">
+      <div
+        ref={previewRef}
+        className="preview-window"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={resetPointer}
+      >
         {/* Title bar */}
         <div className="preview-bar">
           <span /><span /><span />
@@ -219,7 +262,7 @@ function LiveDashboard() {
               <button
                 key={s.id}
                 className={`preview-tab ${screen === i ? "active" : ""}`}
-                onClick={() => { setScreen(i); setVariant(v => (v + 1) % METRIC_VARIANTS.length); }}
+                onClick={() => changeScreen(i)}
               >
                 {s.tab}
               </button>
@@ -250,13 +293,27 @@ function LiveDashboard() {
         {/* Live indicator */}
         <div className="preview-live">
           <span className="preview-live-dot" />
-          Live preview
+          {paused || prefersReducedMotion ? "Preview paused" : "Live preview"}
           <div className="preview-dots">
             {SCREENS.map((_, i) => (
-              <span key={i} className={`pdot ${screen === i ? "active" : ""}`}
-                onClick={() => setScreen(i)} />
+              <button
+                key={i}
+                type="button"
+                className={`pdot ${screen === i ? "active" : ""}`}
+                aria-label={`Show ${SCREENS[i].tab} preview`}
+                aria-pressed={screen === i}
+                onClick={() => changeScreen(i)}
+              />
             ))}
           </div>
+          <button
+            type="button"
+            className="preview-motion-toggle"
+            onClick={() => setPaused((value) => !value)}
+            aria-pressed={paused}
+          >
+            {paused ? "Play" : "Pause"}
+          </button>
         </div>
       </div>
     </div>
@@ -339,8 +396,8 @@ function InteractivePipeline() {
   // Animate the progress line to the active step
   useEffect(() => {
     if (!lineRef.current || active === null) return;
-    const pct = ((active + 0.5) / PIPELINE_STEPS.length) * 100;
-    lineRef.current.style.setProperty("--progress", `${pct}%`);
+    const progress = (active + 0.5) / PIPELINE_STEPS.length;
+    lineRef.current.style.setProperty("--progress", progress.toFixed(3));
   }, [active]);
 
   return (
@@ -349,7 +406,7 @@ function InteractivePipeline() {
       <div className="ipipe-track">
         <div className="ipipe-line-bg" />
         <div className="ipipe-line-fill" ref={lineRef}
-          style={{ "--progress": active !== null ? `${((active + 0.5) / PIPELINE_STEPS.length) * 100}%` : "0%" }} />
+          style={{ "--progress": active !== null ? ((active + 0.5) / PIPELINE_STEPS.length).toFixed(3) : "0" }} />
 
         {PIPELINE_STEPS.map((step, i) => (
           <div

@@ -238,6 +238,7 @@ function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                required
               />
             </div>
 
@@ -250,6 +251,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                required
               />
             </div>
 
