@@ -537,10 +537,18 @@ export default function Landing() {
             <div className="hero-stat"><strong>5</strong><span>team roles</span></div>
             <div className="hero-stat"><strong>1</strong><span>unified workspace</span></div>
           </div>
+          <div className="hero-proof" aria-label="HireTrack highlights">
+            <span><Icon name="check" size={14} /> Role-aware by default</span>
+            <span><Icon name="check" size={14} /> Every stage visible</span>
+          </div>
         </div>
 
         {/* Live animated dashboard */}
         <div className="hero-preview">
+          <div className="hero-preview-badge">
+            <span className="hero-preview-badge-dot" aria-hidden="true" />
+            <span><strong>Live product preview</strong><small>Built around your workflow</small></span>
+          </div>
           <LiveDashboard />
         </div>
       </section>
@@ -556,6 +564,49 @@ export default function Landing() {
       </section>
 
       {/* ── Features ─────────────────────────────────────── */}
+      <section className="landing-command" id="overview">
+        <div className="command-grid">
+          <div className="command-copy">
+            <span className="section-eyebrow">Hiring command center</span>
+            <h2>See what needs attention before it becomes a bottleneck.</h2>
+            <p>HireTrack gives every team a shared view of open roles, candidate movement, interviews, and offers—while keeping permissions clear.</p>
+            <ul className="command-benefits">
+              <li><span><Icon name="check" size={16} /></span><div><strong>One source of truth</strong><small>Every decision stays attached to the candidate journey.</small></div></li>
+              <li><span><Icon name="check" size={16} /></span><div><strong>Clear ownership</strong><small>Delivery, TFG, TAG, and candidates see their next action.</small></div></li>
+              <li><span><Icon name="check" size={16} /></span><div><strong>Fewer handoff gaps</strong><small>Approval, interviews, and offers move in one connected flow.</small></div></li>
+            </ul>
+            <button className="command-link" onClick={() => navigate("/login")}>Explore the workspace <Icon name="arrow" size={16} /></button>
+          </div>
+          <div className="command-bento" aria-label="Illustrative HireTrack workflow overview">
+            <div className="command-panel command-wide">
+              <div className="command-panel-head"><span>Hiring overview</span><em>Live workflow</em></div>
+              <div className="command-stage-row">
+                <div><strong>12</strong><span>Open roles</span></div>
+                <div><strong>38</strong><span>Applications</span></div>
+                <div><strong>14</strong><span>Interviews</span></div>
+                <div><strong>4</strong><span>Offers</span></div>
+              </div>
+              <div className="command-progress"><span style={{ "--progress": "78%" }} /></div>
+              <div className="command-progress-label"><span>Hiring pipeline health</span><strong>78%</strong></div>
+            </div>
+            <div className="command-panel command-activity">
+              <div className="command-panel-head"><span>Next actions</span><Icon name="arrow" size={15} /></div>
+              <div className="command-action"><i className="tone-amber" /><span>TFG review pending</span><b>3</b></div>
+              <div className="command-action"><i className="tone-teal" /><span>Interviews today</span><b>5</b></div>
+              <div className="command-action"><i className="tone-pink" /><span>Offers awaiting reply</span><b>2</b></div>
+            </div>
+            <div className="command-panel command-timeline">
+              <div className="command-panel-head"><span>Candidate journey</span><span className="command-live"><i /> Connected</span></div>
+              <div className="command-timeline-track">
+                {[["Applied", "info"], ["Shortlisted", "amber"], ["Interview", "brand"], ["Offer", "pink"], ["Hired", "green"]].map(([label, tone], i) => (
+                  <div key={label} className="command-timeline-step"><span className={`tone-${tone}`} /><small>{label}</small>{i < 4 && <i />}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="landing-features" id="features">
         <div className="section-head">
           <span className="section-eyebrow">Built for both sides</span>
