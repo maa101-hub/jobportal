@@ -30,27 +30,33 @@ public class OfferController {
 
     @GetMapping("/application/{id}")
     public Offer getByApplication(@PathVariable Long id, HttpServletRequest httpRequest) {
-        AuthContext.requireUserId(httpRequest);
-        return service.getByApplication(id);
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.getByApplication(id, userId);
     }
 
     @PutMapping("/{id}/accept")
     public Offer acceptOffer(@PathVariable Long id, HttpServletRequest httpRequest) {
         AuthContext.requireRole(httpRequest, "CANDIDATE");
-        return service.acceptOffer(id);
+        return service.acceptOffer(id, AuthContext.requireUserId(httpRequest));
     }
  // OfferController
     @PutMapping("/{id}/reject")
     public Offer rejectOffer(@PathVariable Long id, HttpServletRequest httpRequest) {
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
         AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
-        return service.rejectOffer(id);
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.rejectOffer(id, userId);
     }
 
     @PutMapping("/{id}/join")
     public Offer markJoined(
             @PathVariable Long id,
             @RequestParam(required = false) String joiningDate, HttpServletRequest httpRequest) {
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
         AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
-        return service.markJoined(id, joiningDate);
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.markJoined(id, joiningDate, userId);
     }
 }

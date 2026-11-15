@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import "./CandidateProfile.css";
 
 import { jobService } from "../../services/api";
-import { getInterviewsByApplication, getJobApplications } from "../../services/endpoints";
+import { getInterviewsByApplication, getJobApplications, getOfferByApplication } from "../../services/endpoints";
 import { normalizeList, initials, formatDate, humanize, toStage } from "../../utils/helpers";
 import { STAGE_TONE } from "../../utils/constants";
 
@@ -22,6 +22,7 @@ function CandidateProfile() {
 	const [application, setApplication] = useState(null);
 	const [job, setJob] = useState(null);
 	const [interviews, setInterviews] = useState([]);
+	const [offer, setOffer] = useState(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -55,6 +56,10 @@ function CandidateProfile() {
 						const iv = await getInterviewsByApplication(appId || app.id);
 						if (alive) setInterviews(normalizeList(iv.data));
 					} catch { /* optional */ }
+					try {
+						const offerResponse = await getOfferByApplication(appId || app.id);
+						if (alive) setOffer(offerResponse.data?.data ?? offerResponse.data);
+					} catch { if (alive) setOffer(null); }
 				}
 			} finally {
 				if (alive) setLoading(false);
@@ -108,8 +113,8 @@ function CandidateProfile() {
 				<div className="profile-layout">
 					{/* Identity card */}
 					<aside className="profile-identity ht-panel">
-						<span className="ht-avatar profile-avatar">{initials(`U${userId}`)}</span>
-						<h3>Candidate {userId}</h3>
+						<span className="ht-avatar profile-avatar">{initials(application?.fullName || `U${userId}`)}</span>
+						<h3>{application?.fullName || `Candidate ${userId}`}</h3>
 						<p className="profile-sub">External applicant</p>
 						{stage && <span className={`ht-pill tone-${STAGE_TONE[stage]}`}>{humanize(application.status)}</span>}
 
@@ -117,8 +122,8 @@ function CandidateProfile() {
 							<div className="profile-contact-row"><span>User ID</span><strong>{userId}</strong></div>
 							<div className="profile-contact-row"><span>Application</span><strong>{application ? `#${application.id}` : "—"}</strong></div>
 							<div className="profile-contact-row"><span>Resume</span><strong>{application?.resumeUrl || <em className="soon">soon</em>}</strong></div>
-							<div className="profile-contact-row"><span>Email</span><strong><em className="soon">soon</em></strong></div>
-							<div className="profile-contact-row"><span>Phone</span><strong><em className="soon">soon</em></strong></div>
+							<div className="profile-contact-row"><span>Email</span><strong>{application?.email || <em className="soon">not provided</em>}</strong></div>
+							<div className="profile-contact-row"><span>Phone</span><strong>{application?.phone || <em className="soon">not provided</em>}</strong></div>
 						</div>
 					</aside>
 
@@ -142,6 +147,29 @@ function CandidateProfile() {
 							) : (
 								<p className="profile-muted">Job details unavailable.</p>
 							)}
+						</section>
+
+						{offer && (
+							<section className="ht-panel profile-block profile-offer">
+								<h4>Offer</h4>
+								<div className="profile-offer-head">
+									<span className="ht-pill tone-pink">{humanize(offer.status)}</span>
+									<strong>Offer #{offer.id}</strong>
+								</div>
+								<div className="profile-offer-facts">
+									<div><span>Offer date</span><strong>{formatDate(offer.offerDate)}</strong></div>
+									<div><span>Joining date</span><strong>{formatDate(offer.joiningDate)}</strong></div>
+								</div>
+							</section>
+						)}
+
+						<section className="ht-panel profile-block">
+							<h4>Application Details</h4>
+							<div className="profile-facts-grid">
+								<div><span>Experience</span><strong>{application?.experience || "Not provided"}</strong></div>
+								<div><span>Education</span><strong>{application?.education || "Not provided"}</strong></div>
+							</div>
+							{application?.coverLetter && <div className="profile-cover-letter"><span>Cover letter</span><p>{application.coverLetter}</p></div>}
 						</section>
 
 						{/* Skills (from job stack — display-only) */}
@@ -185,7 +213,7 @@ function CandidateProfile() {
 										<div key={iv.id} className="profile-interview">
 											<span className="profile-iv-round">{iv.round}</span>
 											<div className="profile-iv-body">
-												<span className={`ht-pill tone-${["COMPLETED", "OFFERED"].includes(String(iv.status).toUpperCase()) ? "green" : "amber"}`}>{humanize(iv.status)}</span>
+												<span className={`ht-pill tone-${["COMPLETED", "PENDING_DECISION", "OFFERED"].includes(String(iv.status).toUpperCase()) ? "green" : "amber"}`}>{String(iv.status).toUpperCase() === "PENDING_DECISION" ? "Completed" : humanize(iv.status)}</span>
 												{iv.feedback && <p className="profile-iv-feedback">{iv.feedback}</p>}
 											</div>
 											<span className="profile-iv-when">{formatDate(iv.scheduledAt)}</span>

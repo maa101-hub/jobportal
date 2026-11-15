@@ -26,7 +26,9 @@ public class ApplicationController {
         return service.apply(
                 AuthContext.requireUserId(httpRequest),
                 request.getJobId(),
-                request.getResumeUrl()
+                request.getResumeUrl(),
+                request.getFullName(), request.getEmail(), request.getPhone(),
+                request.getExperience(), request.getEducation(), request.getCoverLetter()
         );
     }
 

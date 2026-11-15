@@ -6,7 +6,7 @@ import {
 	getInterviewsByApplication,
 	getJobApplications,
 	addFeedback,
-	offerCandidate,
+	clearInterview,
 	rejectCandidate,
 	scheduleInterview,
 	updateApplicationStatus,
@@ -189,13 +189,10 @@ function Applications() {
 			if (decision === "REJECT") {
 				if (round === "R1") await rejectCandidate(interviewId, "Rejected after final HR round");
 				else await updateApplicationStatus(appId, "REJECTED");
-			} else if (decision === "CLEAR") {
-				if (round === "L1") await updateApplicationStatus(appId, "L1_CLEARED");
-				if (round === "L2") await updateApplicationStatus(appId, "L2_CLEARED");
-			} else if (decision === "OFFER") {
-				await offerCandidate(interviewId);
+			} else if (decision === "CLEAR" || decision === "SELECT") {
+				await clearInterview(interviewId);
 			}
-			toast.success(decision === "OFFER" ? "Offer sent to candidate." : decision === "REJECT" ? "Candidate rejected." : "Round updated.");
+			toast.success(decision === "OFFER" ? "Offer sent to candidate." : decision === "REJECT" ? "Candidate rejected." : decision === "SELECT" ? "Candidate selected for offer." : "Round cleared.");
 			await fetchApplications();
 		} catch (err) {
 			console.log(err);
@@ -374,6 +371,7 @@ function Applications() {
 								const beyond = ["SHORTLISTED", "INTERVIEW_SCHEDULED", "L1_CLEARED", "L2_CLEARED"].includes(status);
 								const next = nextRoundToSchedule(openIvs);
 								const final = finalDecisionRound(openIvs);
+								const pendingDecision = [...openIvs].reverse().find((iv) => String(iv.status).toUpperCase() === "PENDING_DECISION");
 
 								// Once an offer exists (or candidate rejected), the hiring
 								// pipeline for this candidate is settled — no more interviews.
@@ -421,8 +419,15 @@ function Applications() {
 
 										{final?.round === "R1" && (
 											<div className="drawer-decision">
-												<button className="ht-btn-success" onClick={() => roundDecision(openApp.id, "R1", final.interview.id, "OFFER")} disabled={actionLoading}>Send Offer</button>
+												<button className="ht-btn-success" onClick={() => roundDecision(openApp.id, "R1", final.interview.id, "SELECT")} disabled={actionLoading}>Select for offer</button>
 												<button className="ht-btn-danger" onClick={() => roundDecision(openApp.id, "R1", final.interview.id, "REJECT")} disabled={actionLoading}>Reject</button>
+											</div>
+										)}
+
+										{pendingDecision && pendingDecision.round !== "R1" && (
+											<div className="drawer-decision">
+												<button className="ht-btn-success" onClick={() => roundDecision(openApp.id, pendingDecision.round, pendingDecision.id, "CLEAR")} disabled={actionLoading}>Clear {pendingDecision.round}</button>
+												<button className="ht-btn-danger" onClick={() => roundDecision(openApp.id, pendingDecision.round, pendingDecision.id, "REJECT")} disabled={actionLoading}>Reject</button>
 											</div>
 										)}
 

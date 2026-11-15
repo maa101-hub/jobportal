@@ -136,6 +136,17 @@
   filter: none;
 }
 
+.application-form { margin-bottom: var(--space-6); padding: var(--space-5); border: 1px solid var(--brand-100); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+.application-form-head { display: flex; justify-content: space-between; gap: var(--space-4); align-items: flex-start; margin-bottom: var(--space-5); }
+.application-form-head h3 { margin: 0 0 0.25rem; }
+.application-form-head p { margin: 0; color: var(--ink-500); font-size: var(--text-sm); }
+.application-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.application-form-grid label { display: grid; gap: 0.4rem; color: var(--ink-700); font-size: var(--text-sm); font-weight: 600; }
+.application-form-grid input, .application-form-grid textarea { width: 100%; padding: 0.7rem 0.8rem; border: 1px solid var(--ink-200); border-radius: var(--radius-md); font: inherit; color: var(--ink-900); background: var(--surface); }
+.application-form-grid textarea { resize: vertical; }
+.application-form-wide { grid-column: 1 / -1; }
+.application-form-actions { display: flex; justify-content: flex-end; margin-top: var(--space-5); }
+
 /* Empty state */
 .jobs-empty {
   text-align: center;
@@ -156,6 +167,9 @@
 
 @media (max-width: 560px) {
   .jobs-header { flex-direction: column; align-items: flex-start; }
+  .application-form-head { flex-direction: column; }
+  .application-form-grid { grid-template-columns: 1fr; }
+  .application-form-wide { grid-column: auto; }
 }
 
 /* Closed jobs */

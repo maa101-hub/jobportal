@@ -13,6 +13,12 @@ const CLOSED = ["CLOSED"];
 function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [form, setForm] = useState(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    return { fullName: user?.name || "", email: user?.email || "", phone: "", experience: "", education: "", resumeUrl: "", coverLetter: "" };
+  });
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -60,21 +66,32 @@ function Jobs() {
     return applications.some((app) => app.jobId === jobId);
   };
 
-  const handleApply = async (jobId) => {
+  const handleApply = async (e) => {
+    e.preventDefault();
     if (!userId) {
       toast.error("Please sign in again to apply.");
       return;
     }
+    if (!selectedJob || !form.fullName.trim() || !form.email.trim() || !form.phone.trim() || !form.experience.trim() || !form.education.trim()) {
+      toast.error("Please complete all required application fields.");
+      return;
+    }
 
     try {
-      await applyForJob({ userId, jobId, resumeUrl: "resume.pdf" });
-      toast.success("Applied successfully");
+      setSubmitting(true);
+      await applyForJob({ userId, jobId: selectedJob.id, ...form, resumeUrl: form.resumeUrl || "resume.pdf" });
+      toast.success("Application submitted successfully.");
+      setSelectedJob(null);
       await fetchApplications();
     } catch (err) {
       console.log(err);
       toast.error(err.userMessage || "Couldn't submit your application.");
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const updateForm = (key) => (e) => setForm((current) => ({ ...current, [key]: e.target.value }));
 
   const handleViewApplication = () => {
     navigate("/my-applications");
@@ -97,6 +114,25 @@ function Jobs() {
           <p>Check back soon — new positions are posted regularly.</p>
         </div>
       ) : (
+        <>
+        {selectedJob && (
+          <form className="application-form" onSubmit={handleApply}>
+            <div className="application-form-head">
+              <div><h3>Apply for {selectedJob.title}</h3><p>Share the details the hiring team needs for an initial review.</p></div>
+              <button type="button" className="ht-btn-ghost" onClick={() => setSelectedJob(null)}>Cancel</button>
+            </div>
+            <div className="application-form-grid">
+              <label>Full name *<input value={form.fullName} onChange={updateForm("fullName")} required /></label>
+              <label>Email *<input type="email" value={form.email} onChange={updateForm("email")} required /></label>
+              <label>Phone *<input type="tel" value={form.phone} onChange={updateForm("phone")} required /></label>
+              <label>Experience *<input placeholder="e.g. 3 years" value={form.experience} onChange={updateForm("experience")} required /></label>
+              <label>Education *<input placeholder="e.g. B.Tech Computer Science" value={form.education} onChange={updateForm("education")} required /></label>
+              <label>Resume link<input value={form.resumeUrl} onChange={updateForm("resumeUrl")} placeholder="https://…" /></label>
+              <label className="application-form-wide">Cover letter<textarea rows="4" value={form.coverLetter} onChange={updateForm("coverLetter")} placeholder="Tell the company why this role is a good fit." /></label>
+            </div>
+            <div className="application-form-actions"><button type="submit" disabled={submitting}>{submitting ? "Submitting…" : "Submit application"}</button></div>
+          </form>
+        )}
         <div className="jobs-grid">
           {jobs.map((job) => {
             const applied = hasApplied(job.id);
@@ -130,7 +166,7 @@ function Jobs() {
                     View my application
                   </button>
                 ) : (
-                  <button className="btn-apply" onClick={() => handleApply(job.id)}>
+                  <button className="btn-apply" onClick={() => setSelectedJob(job)}>
                     Apply now
                   </button>
                 )}
@@ -138,6 +174,7 @@ function Jobs() {
             );
           })}
         </div>
+        </>
       )}
     </div>
   );

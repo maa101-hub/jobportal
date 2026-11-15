@@ -112,6 +112,10 @@ export const completeInterviewRound = (interviewId) => {
   return applicationAPI.put(`/interviews/${interviewId}/complete`);
 };
 
+export const clearInterview = (interviewId) => {
+  return applicationAPI.put(`/interviews/${interviewId}/clear`);
+};
+
 // Offer candidate
 export const offerCandidate = (interviewId) => {
   return applicationAPI.put(`/interviews/${interviewId}/offer`);

@@ -24,6 +24,12 @@ public class ApplicationService {
 
     @Transactional
     public Application apply(Long userId, Long jobId, String resumeUrl) {
+        return apply(userId, jobId, resumeUrl, null, null, null, null, null, null);
+    }
+
+    @Transactional
+    public Application apply(Long userId, Long jobId, String resumeUrl, String fullName, String email,
+                             String phone, String experience, String education, String coverLetter) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
         if (!(job.getStatus() == JobStatus.APPROVED || job.getStatus() == JobStatus.OPEN)) {
@@ -38,6 +44,12 @@ public class ApplicationService {
         app.setUserId(userId);
         app.setJobId(jobId);
         app.setResumeUrl(resumeUrl);
+        app.setFullName(fullName);
+        app.setEmail(email);
+        app.setPhone(phone);
+        app.setExperience(experience);
+        app.setEducation(education);
+        app.setCoverLetter(coverLetter);
         app.setStatus("APPLIED");
         app.setAppliedAt(LocalDateTime.now());
         app.setUpdatedAt(LocalDateTime.now());

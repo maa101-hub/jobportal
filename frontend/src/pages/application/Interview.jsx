@@ -5,7 +5,7 @@ import {
 	scheduleInterview,
 	addFeedback,
 	getInterviewsByApplication,
-	offerCandidate,
+	clearInterview,
 	rejectCandidate,
 } from "../../services/endpoints";
 import { jobService } from "../../services/api";
@@ -112,10 +112,10 @@ function Interview() {
 	};
 
 	// FIXED: real endpoints instead of hardcoded 8093 fetch.
-	const handleOffer = async (interviewId) => {
+	const handleClear = async (interviewId) => {
 		try {
-			await offerCandidate(interviewId);
-			toast.success("Offer sent to candidate.");
+			await clearInterview(interviewId);
+			toast.success("Round cleared. Candidate moved to the next stage.");
 			await loadCandidates();
 		} catch (err) {
 			console.log(err);
@@ -186,7 +186,7 @@ function Interview() {
 										</div>
 									) : (
 										<div className="iv-decision-btns">
-											<button className="ht-btn-success" onClick={() => handleOffer(interview.id)}>Send Offer</button>
+											<button className="ht-btn-success" onClick={() => handleClear(interview.id)}>{interview.round === "R1" ? "Select for offer" : `Clear ${interview.round}`}</button>
 											<button className="ht-btn-danger" onClick={() => setRejectingId(interview.id)}>Reject</button>
 										</div>
 									)}
@@ -259,7 +259,7 @@ function Interview() {
 										{(interviews[selectedApp.id] || []).map((iv) => (
 											<div key={iv.id} className="iv-round">
 												<span className="iv-round-name">{iv.round}</span>
-												<span className={`ht-pill tone-${String(iv.status).toUpperCase() === "SCHEDULED" ? "info" : "green"}`}>{humanize(iv.status)}</span>
+												<span className={`ht-pill tone-${String(iv.status).toUpperCase() === "SCHEDULED" ? "info" : String(iv.status).toUpperCase() === "PENDING_DECISION" ? "amber" : "green"}`}>{humanize(iv.status)}</span>
 												<span className="iv-round-when">{formatDate(iv.scheduledAt)}</span>
 											</div>
 										))}

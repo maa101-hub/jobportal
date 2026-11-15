@@ -5,6 +5,7 @@ import com.mphasis.jobpostal.application_service.entity.Interview;
 import com.mphasis.jobpostal.application_service.repository.InterviewRepository;
 import com.mphasis.jobpostal.application_service.repository.ApplicationRepository;
 import com.mphasis.hiringtracker.config.AuthContext;
+import com.mphasis.jobportal.offer_service.service.OfferService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,14 @@ public class InterviewService {
     private final InterviewRepository repository;
     private final ApplicationService applicationService;
     private final ApplicationRepository applicationRepository;
+    private final OfferService offerService;
 
     public InterviewService(InterviewRepository repository, ApplicationService applicationService,
-                            ApplicationRepository applicationRepository) {
+                            ApplicationRepository applicationRepository, OfferService offerService) {
         this.repository = repository;
         this.applicationService = applicationService;
         this.applicationRepository = applicationRepository;
+        this.offerService = offerService;
     }
 
     // ✅ Schedule Interview
@@ -106,10 +109,7 @@ public class InterviewService {
 
         // 🔄 Update application status to OFFERED
         try {
-            applicationService.updateStatus(
-                    interview.getApplicationId(),
-                    "OFFERED"
-            );
+            offerService.createOffer(interview.getApplicationId(), null);
         } catch (Exception e) {
             log.error("Error updating application status: {}", e.getMessage());
         }
@@ -176,5 +176,26 @@ public class InterviewService {
         // interview.setStatus("PENDING_DECISION");
 
         return repository.save(interview);
+    }
+
+    @Transactional
+    public Interview clearInterview(Long id) {
+        Interview interview = getById(id);
+        if (!"PENDING_DECISION".equalsIgnoreCase(interview.getStatus())
+                && !"COMPLETED".equalsIgnoreCase(interview.getStatus())) {
+            throw new RuntimeException("This interview is not ready for a decision");
+        }
+        interview.setStatus("COMPLETED");
+        interview.setDecision("CLEARED");
+        Interview saved = repository.save(interview);
+
+        String nextStatus = switch (String.valueOf(interview.getRound()).toUpperCase()) {
+            case "L1" -> "L1_CLEARED";
+            case "L2" -> "L2_CLEARED";
+            case "R1" -> "SELECTED";
+            default -> "SELECTED";
+        };
+        applicationService.updateStatus(interview.getApplicationId(), nextStatus);
+        return saved;
     }
 }

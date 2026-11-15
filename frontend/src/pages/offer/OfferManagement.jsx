@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./OfferManagement.css";
 
 import { createOffer, getOffer, joinOfferByIdWithDate } from "../../services/endpoints";
-import { formatDate, humanize } from "../../utils/helpers";
+import { applicationService, jobService, userService } from "../../services/api";
+import { formatDate, getCompanyId, normalizeList, humanize } from "../../utils/helpers";
 
 // The offer lifecycle as a visual tracker.
 const FLOW = [
@@ -36,6 +37,33 @@ function OfferManagement() {
 	const [offer, setOffer] = useState(null);
 	const [busy, setBusy] = useState(null);
 	const [message, setMessage] = useState(null);
+	const [selectedCandidates, setSelectedCandidates] = useState([]);
+	const [loadingCandidates, setLoadingCandidates] = useState(true);
+
+	const loadSelectedCandidates = useCallback(async () => {
+		const companyId = getCompanyId();
+		if (!companyId) { setLoadingCandidates(false); return; }
+		setLoadingCandidates(true);
+		try {
+			const jobs = normalizeList((await jobService.getCompanyJobs(companyId)).data);
+			const jobIds = jobs.map((job) => job.id).filter(Boolean);
+			if (!jobIds.length) { setSelectedCandidates([]); return; }
+			const apps = normalizeList((await applicationService.getApplicationsByJobIds(jobIds)).data)
+				.filter((app) => String(app.status).toUpperCase() === "SELECTED");
+			const candidates = await Promise.all(apps.map(async (app) => {
+				try {
+					const user = (await userService.getUserById(app.userId)).data;
+					return { ...app, candidateName: user?.name || `Candidate ${app.userId}`, candidateEmail: user?.email || "" };
+				} catch { return { ...app, candidateName: `Candidate ${app.userId}`, candidateEmail: "" }; }
+			}));
+			setSelectedCandidates(candidates);
+		} catch (err) {
+			console.log(err);
+			setSelectedCandidates([]);
+		} finally { setLoadingCandidates(false); }
+	}, []);
+
+	useEffect(() => { void loadSelectedCandidates(); }, [loadSelectedCandidates]);
 
 	const flash = (type, text) => setMessage({ type, text });
 
@@ -64,6 +92,7 @@ function OfferManagement() {
 		try {
 			const res = await createOffer({ applicationId: n, joiningDate });
 			setOffer(res.data?.data ?? res.data ?? null);
+			setSelectedCandidates((items) => items.filter((item) => String(item.id) !== String(n)));
 			flash("success", "Offer released to the candidate.");
 		} catch (err) {
 			console.log(err);
@@ -109,8 +138,12 @@ function OfferManagement() {
 					<p className="offers-form-sub">Look up an existing offer or create a new one by application.</p>
 
 					<div className="offers-field">
-						<label htmlFor="o-app">Application ID</label>
-						<input id="o-app" type="number" placeholder="e.g. 42" value={applicationId} onChange={(e) => setApplicationId(e.target.value)} />
+						<label htmlFor="o-app">Selected candidate</label>
+						<select id="o-app" value={applicationId} onChange={(e) => setApplicationId(e.target.value)} disabled={loadingCandidates || !selectedCandidates.length}>
+							<option value="">{loadingCandidates ? "Loading selected candidates…" : selectedCandidates.length ? "Choose a candidate" : "No selected candidates"}</option>
+							{selectedCandidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.candidateName} · Application #{candidate.id} · Job #{candidate.jobId}</option>)}
+						</select>
+						{selectedCandidates.find((candidate) => String(candidate.id) === String(applicationId))?.candidateEmail && <small className="offers-selected-email">{selectedCandidates.find((candidate) => String(candidate.id) === String(applicationId)).candidateEmail}</small>}
 					</div>
 					<div className="offers-field">
 						<label htmlFor="o-join">Joining date</label>

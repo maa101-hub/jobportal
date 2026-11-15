@@ -83,4 +83,10 @@ public class InterviewController {
         Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
         return service.completeInterview(id, userId);
     }
+
+    @PutMapping("/{id}/clear")
+    public Interview clearInterview(@PathVariable Long id, HttpServletRequest httpRequest) {
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
+        return service.clearInterview(id);
+    }
 }

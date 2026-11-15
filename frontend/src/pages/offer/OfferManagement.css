@@ -15,6 +15,7 @@
 .offers-form h3 { margin: 0 0 2px; }
 .offers-form-sub { margin: 0 0 var(--space-5); font-size: var(--text-sm); color: var(--ink-500); }
 .offers-field { display: grid; gap: 0.4rem; margin-bottom: var(--space-4); }
+.offers-selected-email { color: var(--ink-500); font-size: var(--text-xs); }
 .offers-form-actions { display: flex; gap: 0.5rem; }
 .offers-form-actions button { flex: 1; }
 
