@@ -30,15 +30,19 @@ public class InterviewController {
     // ✅ Get all interviews for an application
     @GetMapping("/application/{applicationId}")
     public List<Interview> getByApplication(@PathVariable Long applicationId, HttpServletRequest httpRequest) {
-        AuthContext.requireUserId(httpRequest);
-        return service.getByApplication(applicationId);
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.getByApplication(applicationId, userId);
     }
 
     // ✅ Get interview by ID
     @GetMapping("/{id}")
     public Interview getById(@PathVariable Long id, HttpServletRequest httpRequest) {
-        AuthContext.requireUserId(httpRequest);
-        return service.getById(id);
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.getById(id, userId);
     }
 
     // ✅ Add feedback (NO rating) - Interview stays in PENDING_DECISION
@@ -74,7 +78,9 @@ public class InterviewController {
     }
     @PutMapping("/{id}/complete")
     public Interview completeInterview(@PathVariable Long id, HttpServletRequest httpRequest) {
-        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
-        return service.completeInterview(id);
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
+        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
+        return service.completeInterview(id, userId);
     }
 }

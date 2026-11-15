@@ -3,6 +3,8 @@ package com.mphasis.jobpostal.application_service.service;
 import com.mphasis.jobpostal.application_service.dto.InterviewRequest;
 import com.mphasis.jobpostal.application_service.entity.Interview;
 import com.mphasis.jobpostal.application_service.repository.InterviewRepository;
+import com.mphasis.jobpostal.application_service.repository.ApplicationRepository;
+import com.mphasis.hiringtracker.config.AuthContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,13 @@ public class InterviewService {
 
     private final InterviewRepository repository;
     private final ApplicationService applicationService;
+    private final ApplicationRepository applicationRepository;
 
-    public InterviewService(InterviewRepository repository, ApplicationService applicationService) {
+    public InterviewService(InterviewRepository repository, ApplicationService applicationService,
+                            ApplicationRepository applicationRepository) {
         this.repository = repository;
         this.applicationService = applicationService;
+        this.applicationRepository = applicationRepository;
     }
 
     // ✅ Schedule Interview
@@ -53,10 +58,31 @@ public class InterviewService {
         return repository.findByApplicationId(appId);
     }
 
+    public List<Interview> getByApplication(Long appId, Long candidateUserId) {
+        assertCandidateOwnsApplication(appId, candidateUserId);
+        return getByApplication(appId);
+    }
+
     // ✅ Get interview by ID
     public Interview getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Interview not found with ID: " + id));
+    }
+
+    public Interview getById(Long id, Long candidateUserId) {
+        Interview interview = getById(id);
+        assertCandidateOwnsApplication(interview.getApplicationId(), candidateUserId);
+        return interview;
+    }
+
+    private void assertCandidateOwnsApplication(Long applicationId, Long candidateUserId) {
+        if (candidateUserId == null) return;
+        Long applicationUserId = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"))
+                .getUserId();
+        if (!candidateUserId.equals(applicationUserId)) {
+            throw new AuthContext.ForbiddenException("You can only access your own interview");
+        }
     }
 
     // ✅ Add feedback only (NO rating decision)
@@ -132,12 +158,19 @@ public class InterviewService {
             log.error("Error reverting application status: {}", e.getMessage());
         }
     }
-    public Interview completeInterview(Long id) {
+    public Interview completeInterview(Long id, Long candidateUserId) {
         Interview interview = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
-        // Keep simple: scheduled -> completed
-        interview.setStatus("COMPLETED");
+        if (candidateUserId != null) {
+            assertCandidateOwnsApplication(interview.getApplicationId(), candidateUserId);
+        }
+
+        if (!"SCHEDULED".equalsIgnoreCase(interview.getStatus())) {
+            throw new RuntimeException("This interview is not available to complete");
+        }
+        interview.setStatus("PENDING_DECISION");
+        interview.setCompletedAt(LocalDateTime.now());
 
         // Optional: if you want immediate admin decision state
         // interview.setStatus("PENDING_DECISION");

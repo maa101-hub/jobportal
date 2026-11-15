@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import "./CreateJob.css";
 
 import { createJob } from "../../services/endpoints";
-import { getRole, getCompanyId, getUser } from "../../utils/helpers";
+import { getCompanyId, getUser } from "../../utils/helpers";
 
 const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
 
 function CreateJob() {
 	const navigate = useNavigate();
-	const role = getRole();
 	const companyId = getCompanyId();
 	const user = useMemo(() => getUser(), []);
 	const createdBy = user?.id ?? Number(localStorage.getItem("userId"));
@@ -170,19 +169,11 @@ function CreateJob() {
 				</section>
 
 				<div className="form-actions">
-					<span className="form-note">Employment type (marked <span className="soon">soon</span>) is display-only; all other fields are saved.</span>
+					<span className="form-note">Every new job is sent to TFG for approval before it becomes visible to candidates.</span>
 					<div className="form-actions-btns">
-						<button type="button" className="ht-btn-ghost" onClick={() => submit("draft")} disabled={!!submitting}>
-							{submitting === "draft" ? "Saving…" : "Save Draft"}
-						</button>
 						<button type="button" onClick={() => submit("review")} disabled={!!submitting}>
 							{submitting === "review" ? "Sending…" : "Send for TFG Review"}
 						</button>
-						{role === "ADMIN" && (
-							<button type="button" className="ht-btn-success" onClick={() => submit("publish")} disabled={!!submitting}>
-								{submitting === "publish" ? "Publishing…" : "Publish Job"}
-							</button>
-						)}
 					</div>
 				</div>
 			</form>

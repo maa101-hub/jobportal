@@ -49,7 +49,7 @@ function MyApplications() {
 		const l1 = latestRound(interviews, "L1");
 		const l2 = latestRound(interviews, "L2");
 		const r1 = latestRound(interviews, "R1");
-		if (!l1) return "Waiting for first round (L1)";
+		if (!l1) return appStatus === "APPLIED" ? "Applied — awaiting company review" : "Waiting for first round (L1)";
 		if (l1 && isDone(l1) && !l2) return "Waiting for second round (L2)";
 		if (l2 && isDone(l2) && !r1) return "Waiting for HR round";
 		if (r1 && isDone(r1) && !["OFFERED", "OFFER_RELEASED", "REJECTED", "ACCEPTED", "JOINED"].includes(String(appStatus || "").toUpperCase()))
@@ -178,6 +178,7 @@ function MyApplications() {
 						const job = jobDetails[app.jobId] || {};
 						const ivs = interviewsMap[app.id] || [];
 						const upcoming = nextScheduled(ivs);
+						const feedback = [...ivs].reverse().find((iv) => iv.feedback)?.feedback;
 						return (
 							<article key={app.id} className="myapp-card" style={{ "--i": i }}>
 								<div className="myapp-top">
@@ -205,6 +206,7 @@ function MyApplications() {
 										Take {upcoming.round} interview
 									</button>
 								)}
+								{feedback && <div className="myapp-feedback"><span>Company feedback</span><p>{feedback}</p></div>}
 							</article>
 						);
 					})}

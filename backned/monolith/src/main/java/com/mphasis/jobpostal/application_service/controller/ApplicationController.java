@@ -43,7 +43,7 @@ public class ApplicationController {
     @GetMapping("/job/{jobId}")
     public List<Application> getByJob(@PathVariable Long jobId, HttpServletRequest httpRequest) {
         AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
-        return service.getByJob(jobId);
+        return service.getByJob(jobId, AuthContext.requireCompanyId(httpRequest));
     }
 
     /**
@@ -59,12 +59,12 @@ public class ApplicationController {
                 .filter(s -> !s.isEmpty())
                 .map(Long::parseLong)
                 .toList();
-        return service.getByJobIds(ids);
+        return service.getByJobIds(ids, AuthContext.requireCompanyId(httpRequest));
     }
 
     @PutMapping("/{id}/status")
     public Application updateStatus(@PathVariable Long id, @RequestParam String status, HttpServletRequest httpRequest) {
         AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
-        return service.updateStatus(id, status);
+        return service.updateStatus(id, status, AuthContext.requireCompanyId(httpRequest));
     }
 }

@@ -5,11 +5,13 @@ import "./Applications.css";
 import {
 	getInterviewsByApplication,
 	getJobApplications,
+	addFeedback,
 	offerCandidate,
 	rejectCandidate,
 	scheduleInterview,
 	updateApplicationStatus,
 } from "../../services/endpoints";
+import { userService } from "../../services/api";
 import { normalizeList, toStage, initials, formatDate, humanize } from "../../utils/helpers";
 import { PIPELINE_STAGES, STAGE_TONE } from "../../utils/constants";
 import { useToast } from "../../components/Toast/ToastContext";
@@ -36,11 +38,13 @@ function Applications() {
 	const [jobId, setJobId] = useState("");
 	const [applications, setApplications] = useState([]);
 	const [interviewsMap, setInterviewsMap] = useState({});
+	const [candidateDetails, setCandidateDetails] = useState({});
 	const [scheduleAt, setScheduleAt] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [actionLoading, setActionLoading] = useState(false);
 	const [searchedJobId, setSearchedJobId] = useState("");
 	const [openAppId, setOpenAppId] = useState(null);
+	const [feedbackForm, setFeedbackForm] = useState({ interviewId: "", feedback: "" });
 
 	// ---- interview round helpers (state machine preserved) ------------------
 	const latestRound = (interviews, round) =>
@@ -110,6 +114,12 @@ function Applications() {
 				const res = await getJobApplications(n);
 				const list = normalizeList(res.data);
 				setApplications(list);
+				const candidateMap = {};
+				await Promise.all(list.map(async (app) => {
+					if (!app.userId) return;
+					try { candidateMap[app.userId] = (await userService.getUserById(app.userId)).data; } catch { /* keep fallback id */ }
+				}));
+				setCandidateDetails(candidateMap);
 				await loadInterviews(list);
 				setSearchedJobId(String(n));
 				setJobId(String(n));
@@ -193,6 +203,23 @@ function Applications() {
 		} finally {
 			setActionLoading(false);
 		}
+	};
+
+	const submitFeedback = async () => {
+		if (!feedbackForm.interviewId || !feedbackForm.feedback.trim()) {
+			toast.error("Select an interview and enter feedback.");
+			return;
+		}
+		try {
+			setActionLoading(true);
+			await addFeedback(feedbackForm.interviewId, feedbackForm.feedback.trim());
+			toast.success("Feedback sent to the candidate.");
+			setFeedbackForm({ interviewId: "", feedback: "" });
+			await fetchApplications();
+		} catch (err) {
+			console.log(err);
+			toast.error("Couldn't send feedback.");
+		} finally { setActionLoading(false); }
 	};
 
 	// ---- board grouping -----------------------------------------------------
@@ -279,7 +306,7 @@ function Applications() {
 													</span>
 													<span className="kanban-card-id">#{app.id}</span>
 												</div>
-												<strong className="kanban-card-name">Candidate {app.userId}</strong>
+								<strong className="kanban-card-name">{candidateDetails[app.userId]?.name || `Candidate ${app.userId}`}</strong>
 												<span className="kanban-card-job">Job #{app.jobId ?? searchedJobId}</span>
 												<span className={`ht-pill tone-${tone}`}>{humanize(app.status)}</span>
 											</button>
@@ -315,7 +342,7 @@ function Applications() {
 							<div className="drawer-id">
 								<span className="ht-avatar">{initials(`U${openApp.userId}`)}</span>
 								<div>
-									<h3>Candidate {openApp.userId}</h3>
+								<h3>{candidateDetails[openApp.userId]?.name || `Candidate ${openApp.userId}`}</h3>
 									<p>Application #{openApp.id} · Job #{openApp.jobId ?? searchedJobId}</p>
 								</div>
 							</div>
@@ -354,6 +381,15 @@ function Applications() {
 									return (
 										<div className="drawer-actions">
 											<div className="drawer-settled tone-danger">This candidate was rejected.</div>
+											<div className="drawer-feedback">
+												<label htmlFor="rejected-feedback-round">Send interview feedback</label>
+												<select id="rejected-feedback-round" value={feedbackForm.interviewId} onChange={(e) => setFeedbackForm((f) => ({ ...f, interviewId: e.target.value }))}>
+													<option value="">Select completed round</option>
+													{openIvs.filter(isCompleted).map((iv) => <option key={iv.id} value={iv.id}>{iv.round} - Interview #{iv.id}</option>)}
+												</select>
+												<textarea rows="3" placeholder="Feedback for the candidate..." value={feedbackForm.feedback} onChange={(e) => setFeedbackForm((f) => ({ ...f, feedback: e.target.value }))} />
+												<button className="ht-btn-ghost" onClick={submitFeedback} disabled={actionLoading}>Send feedback</button>
+											</div>
 											<button className="ht-btn-ghost" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>View full profile</button>
 										</div>
 									);
