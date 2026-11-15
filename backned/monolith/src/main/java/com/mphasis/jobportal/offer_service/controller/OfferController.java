@@ -22,9 +22,12 @@ public class OfferController {
     @PostMapping
     public Offer createOffer(@Valid @RequestBody OfferRequest request, HttpServletRequest httpRequest) {
         AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        Long companyId = "TAG".equals(role) ? AuthContext.requireCompanyId(httpRequest) : null;
         return service.createOffer(
                 request.getApplicationId(),
-                request.getJoiningDate()
+                request.getJoiningDate(),
+                companyId
         );
     }
 
@@ -33,7 +36,8 @@ public class OfferController {
         String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
         AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
         Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
-        return service.getByApplication(id, userId);
+        Long companyId = "TAG".equals(role) ? AuthContext.requireCompanyId(httpRequest) : null;
+        return service.getByApplication(id, userId, companyId);
     }
 
     @PutMapping("/{id}/accept")
@@ -41,13 +45,13 @@ public class OfferController {
         AuthContext.requireRole(httpRequest, "CANDIDATE");
         return service.acceptOffer(id, AuthContext.requireUserId(httpRequest));
     }
- // OfferController
     @PutMapping("/{id}/reject")
     public Offer rejectOffer(@PathVariable Long id, HttpServletRequest httpRequest) {
         String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
         AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
         Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
-        return service.rejectOffer(id, userId);
+        Long companyId = "TAG".equals(role) ? AuthContext.requireCompanyId(httpRequest) : null;
+        return service.rejectOffer(id, userId, companyId);
     }
 
     @PutMapping("/{id}/join")
@@ -55,8 +59,8 @@ public class OfferController {
             @PathVariable Long id,
             @RequestParam(required = false) String joiningDate, HttpServletRequest httpRequest) {
         String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
-        AuthContext.requireRole(httpRequest, "CANDIDATE", "TAG", "ADMIN");
-        Long userId = "CANDIDATE".equals(role) ? AuthContext.requireUserId(httpRequest) : null;
-        return service.markJoined(id, joiningDate, userId);
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
+        Long companyId = "TAG".equals(role) ? AuthContext.requireCompanyId(httpRequest) : null;
+        return service.markJoined(id, joiningDate, companyId);
     }
 }
