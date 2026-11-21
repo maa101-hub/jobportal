@@ -152,7 +152,7 @@ function CompanyJobs() {
 						const showClose = canClose && ["APPROVED", "OPEN"].includes(status);
 
 						return (
-							<article key={job.id} className="job-card" style={{ "--i": i }}>
+							<article key={job.id} className={`job-card ${status === "CLOSED" ? "closed" : ""}`} style={{ "--i": i }}>
 								<div className="job-card-top">
 									<div className="job-title-wrap">
 										<h3>{job.title || "Untitled role"}</h3>
@@ -164,6 +164,11 @@ function CompanyJobs() {
 								<p className="job-description">{job.description || "No description provided."}</p>
 
 								<div className="job-tags">
+									{job.location && <span className="job-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>{job.location}</span>}
+									{job.experience && <span className="job-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="3" /><path d="M9 7V5h6v2M3 12h18" /></svg>{job.experience}</span>}
+								</div>
+
+								<div className="job-tags job-tags-legacy">
 									{job.location && <span className="job-tag">📍 {job.location}</span>}
 									{job.experience && <span className="job-tag">💼 {job.experience}</span>}
 								</div>

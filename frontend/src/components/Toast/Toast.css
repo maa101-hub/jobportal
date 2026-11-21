@@ -49,7 +49,7 @@
 .toast-icon svg { width: 15px; height: 15px; }
 .toast-success .toast-icon { background: linear-gradient(150deg, #34d399, #059669); }
 .toast-error .toast-icon { background: linear-gradient(150deg, #f87171, #dc2626); }
-.toast-info .toast-icon { background: linear-gradient(150deg, #818cf8, #4f46e5); }
+.toast-info .toast-icon { background: linear-gradient(150deg, var(--brand-400), var(--brand-600)); }
 .toast-warning .toast-icon { background: linear-gradient(150deg, #fbbf24, #f59e0b); }
 
 .toast-msg {

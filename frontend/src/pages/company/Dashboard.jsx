@@ -91,6 +91,7 @@ function Dashboard() {
 		workQueue: role === "TFG" ? "/company/review" : role === "TAG" ? "/company/applications" : role === "DELIVERY" ? "/company/create-job" : "/company/job-requests",
 	}), [role]);
 	const displayName = (user?.email || "there").split("@")[0];
+	const todayLabel = useMemo(() => new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long" }).format(new Date()), []);
 	const companyId = getCompanyId();
 
 	const [stats, setStats] = useState({
@@ -105,6 +106,7 @@ function Dashboard() {
 	);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
+	const [showPipelineDemo, setShowPipelineDemo] = useState(false);
 
 	useEffect(() => {
 		let alive = true;
@@ -167,6 +169,9 @@ function Dashboard() {
 	}, [companyId]);
 
 	const maxStage = Math.max(1, ...PIPELINE_STAGES.map((s) => pipeline[s] || 0));
+	const previewPipeline = { NEW: 12, SCREENING: 8, SHORTLISTED: 6, INTERVIEW: 5, SELECTED: 3, OFFER: 2, HIRED: 1 };
+	const visiblePipeline = showPipelineDemo ? previewPipeline : pipeline;
+	const visibleMaxStage = Math.max(1, ...PIPELINE_STAGES.map((s) => visiblePipeline[s] || 0));
 
 	const nextActions = useMemo(() => {
 		const actions = [];
@@ -232,7 +237,17 @@ function Dashboard() {
 
 	return (
 		<div className="ht-page company-dashboard-page">
-			{/* Welcome banner */}
+			<section className="dashboard-top">
+				<div className="dashboard-greeting">
+					<small>{todayLabel}</small>
+					<h2>Good to see you <span className="wave">👋</span></h2>
+				</div>
+				<button className="dashboard-new-job" onClick={() => navigate(roleRoutes.workQueue)}>
+					<span aria-hidden="true">+</span> New job request
+				</button>
+			</section>
+
+			{/* Legacy welcome banner kept for behavior compatibility; reference header replaces it visually. */}
 			<section className="welcome-banner ht-glass">
 				<div className="welcome-copy">
 					<h2>Welcome back, <span>{displayName}</span> <span className="wave">👋</span></h2>
@@ -306,17 +321,18 @@ function Dashboard() {
 						</div>
 					</header>
 
-					{stats.applications === 0 ? (
+					{stats.applications === 0 && !showPipelineDemo ? (
 						<div className="pipeline-empty">
 							<span className="chart-empty-mark" aria-hidden="true" />
 							<strong>No candidates in the pipeline yet</strong>
 							<p>Publish a job and applications will flow through these stages.</p>
+							<button className="pipeline-preview" onClick={() => setShowPipelineDemo(true)}>Preview with sample data</button>
 						</div>
 					) : (
 						<ul className="pipeline">
 							{PIPELINE_STAGES.map((stage, i) => {
-								const count = pipeline[stage] || 0;
-								const pct = Math.round((count / maxStage) * 100);
+								const count = visiblePipeline[stage] || 0;
+								const pct = Math.round((count / visibleMaxStage) * 100);
 								return (
 									<li key={stage} className="pipeline-row" style={{ "--i": i }}>
 										<span className="pipeline-label">{stage.charAt(0) + stage.slice(1).toLowerCase()}</span>

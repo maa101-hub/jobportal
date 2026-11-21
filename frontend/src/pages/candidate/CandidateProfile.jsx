@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import "./CandidateProfile.css";
+import LiquidLoader from "../../components/Loading/LiquidLoader";
 
 import { jobService } from "../../services/api";
 import { getInterviewsByApplication, getJobApplications, getOfferByApplication } from "../../services/endpoints";
@@ -108,7 +109,7 @@ function CandidateProfile() {
 			</header>
 
 			{loading ? (
-				<div className="ht-panel profile-loading">Loading profile…</div>
+				<div className="ht-loading-panel profile-loading"><LiquidLoader label="Loading profile" /></div>
 			) : (
 				<div className="profile-layout">
 					{/* Identity card */}

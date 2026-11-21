@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./Interview.css";
+import SelectInput from "../../components/SelectInput/SelectInput";
+import DateTimeInput from "../../components/DateTimeInput/DateTimeInput";
 import {
 	getJobApplications,
 	scheduleInterview,
@@ -226,7 +228,7 @@ function Interview() {
 					<aside className="iv-panel ht-panel">
 						<div className="iv-field iv-picker">
 							<label htmlFor="iv-candidate">Candidate</label>
-							<select
+							<SelectInput
 								id="iv-candidate"
 								value={selectedApp?.id ?? ""}
 								onChange={(e) => {
@@ -241,7 +243,7 @@ function Interview() {
 										Candidate {a.userId} · App #{a.id} · {humanize(a.status)}
 									</option>
 								))}
-							</select>
+							</SelectInput>
 						</div>
 
 						{selectedApp ? (
@@ -270,14 +272,14 @@ function Interview() {
 									<h4>Schedule a round</h4>
 									<div className="iv-field">
 										<label htmlFor="iv-round">Round</label>
-										<select id="iv-round" value={scheduleForm.round} onChange={(e) => setScheduleForm((f) => ({ ...f, round: e.target.value }))} required>
+										<SelectInput id="iv-round" value={scheduleForm.round} onChange={(e) => setScheduleForm((f) => ({ ...f, round: e.target.value }))} required>
 											<option value="">Select round…</option>
 											{ROUNDS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-										</select>
+										</SelectInput>
 									</div>
 									<div className="iv-field">
 										<label htmlFor="iv-when">Date &amp; time</label>
-										<input id="iv-when" type="datetime-local" value={scheduleForm.scheduledAt} onChange={(e) => setScheduleForm((f) => ({ ...f, scheduledAt: e.target.value }))} required />
+										<DateTimeInput id="iv-when" value={scheduleForm.scheduledAt} onChange={(e) => setScheduleForm((f) => ({ ...f, scheduledAt: e.target.value }))} required />
 									</div>
 									<button type="submit">Schedule interview</button>
 								</form>

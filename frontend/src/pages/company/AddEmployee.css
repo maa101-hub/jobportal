@@ -102,3 +102,61 @@
 @media (prefers-reduced-motion: reduce) {
 	.form-section { animation: none; }
 }
+
+/* Add team member reference surface: oat form cards + forest live preview. */
+.addmember-page { max-width: 1180px; }
+.addmember-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 20px; align-items: start; }
+.addmember-form { gap: 18px; }
+.form-section {
+	position: relative; overflow: hidden; padding: 26px; border-radius: 26px;
+	background: var(--surface-subtle); border-color: var(--brand-200); box-shadow: 0 10px 30px -16px rgba(45,74,56,.25);
+}
+.form-section::after { content: ""; position: absolute; right: -56px; top: -70px; width: 170px; height: 170px; border-radius: 50%; background: var(--brand-100); opacity: .35; pointer-events: none; }
+.form-section > * { position: relative; z-index: 1; }
+.form-section-head h3 { color: var(--brand-700); font-size: 1.32rem; }
+.form-section-head p { color: var(--ink-500); }
+.form-field label { color: var(--brand-700); }
+.form-field input, .form-field select, .form-field textarea {
+	height: 50px; border: 1.5px solid var(--brand-200); border-radius: 15px; background: var(--surface-inset); color: var(--brand-700);
+	transition: border-color .2s, box-shadow .25s, background .2s, transform .3s var(--ease);
+}
+.form-field input:hover, .form-field select:hover { border-color: var(--brand-400); }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--brand-600); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-100); transform: translateY(-1px); }
+.role-picker { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.role-option { min-height: 112px; padding: 16px 18px; border: 1.5px solid var(--brand-200); border-radius: 18px; background: var(--surface-inset); }
+.role-option::after { content: "✓"; position: absolute; top: 14px; right: 14px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-600); color: var(--surface-subtle); font-size: 12px; font-weight: 800; transform: scale(0); transition: transform .45s var(--ease); }
+.role-option.selected::after { transform: scale(1); }
+.role-option:hover { border-color: var(--brand-400); box-shadow: var(--shadow-sm); }
+.role-option.selected { background: var(--brand-100); border-color: var(--brand-600); box-shadow: 0 0 0 4px rgba(94,125,104,.18); }
+.role-option-title { color: var(--brand-700); font-size: 1rem; }
+.role-option.selected .role-option-title { color: var(--brand-700); }
+.role-option-desc { color: var(--ink-500); }
+.form-actions { padding: 18px 0 2px; }
+.form-actions-btns button[type="submit"] { background: var(--accent-500); box-shadow: 0 10px 20px -10px var(--accent-500); }
+.form-actions-btns button[type="submit"]:hover { background: var(--accent-400); box-shadow: 0 14px 25px -12px var(--accent-500); filter: none; transform: translateY(-2px); }
+.addmember-preview { position: sticky; top: 20px; opacity: 0; animation: addmember-rise .8s var(--ease) .35s forwards; }
+.addmember-preview-card {
+	position: relative; overflow: hidden; padding: 24px; border-radius: 26px; color: #f4ecdc;
+	background: linear-gradient(140deg, #2a4632, #1b3025); box-shadow: 0 24px 40px -22px rgba(20,40,28,.7);
+}
+.addmember-preview-card::after { content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -70px; top: -80px; background: rgba(244,236,220,.08); animation: addmember-drift 9s ease-in-out infinite; }
+.addmember-preview-card > * { position: relative; z-index: 1; }
+.addmember-preview-kicker { display: block; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.addmember-preview-meter { height: 5px; max-width: 220px; margin: 16px 0 2px; overflow: hidden; border-radius: 99px; background: rgba(244,236,220,.18); }
+.addmember-preview-meter b { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #8fa889, #f4ecdc); transform: scaleX(var(--progress)); transform-origin: left; transition: transform .5s var(--ease); }
+.addmember-avatar { display: grid; place-items: center; width: 68px; height: 68px; margin: 16px 0 14px; border-radius: 50%; background: #f4ecdc; color: #1e3528; font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; transition: transform .5s var(--ease); }
+.addmember-preview-card:hover .addmember-avatar { transform: scale(1.08) rotate(-6deg); }
+.addmember-preview-card h3 { color: #f4ecdc; font-size: 1.5rem; letter-spacing: -.03em; word-break: break-word; }
+.addmember-role-badge { display: inline-block; margin: 10px 0 14px; padding: 5px 12px; border-radius: 99px; background: var(--accent-500); color: #fff; font-size: .75rem; font-weight: 800; }
+.addmember-preview-card p { margin-bottom: 14px; color: rgba(244,236,220,.8); font-size: .85rem; line-height: 1.5; }
+.addmember-preview-line { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(244,236,220,.14); font-size: .84rem; }
+.addmember-preview-line span { opacity: .6; }
+.addmember-preview-line strong { max-width: 62%; color: #f4ecdc; text-align: right; overflow-wrap: anywhere; font-weight: 600; }
+.addmember-preview-line strong.is-active, .addmember-preview-line strong.is-inactive { display: inline-flex; align-items: center; gap: 7px; }
+.addmember-preview-line i { width: 8px; height: 8px; border-radius: 50%; background: #8fd3a4; box-shadow: 0 0 0 0 rgba(143,211,164,.6); animation: addmember-pulse 2s infinite; }
+.addmember-preview-line .is-inactive i { background: #b9b3a2; animation: none; }
+@keyframes addmember-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes addmember-drift { 50% { transform: translate(-20px, 16px) scale(1.1); } }
+@keyframes addmember-pulse { 70%, 100% { box-shadow: 0 0 0 8px rgba(143,211,164,0); } }
+@media (max-width: 960px) { .addmember-layout { grid-template-columns: 1fr; } .addmember-preview { position: static; order: -1; } }
+@media (prefers-reduced-motion: reduce) { .addmember-preview, .addmember-preview-card::after, .addmember-preview-line i { animation: none; } .addmember-preview-meter b, .addmember-avatar { transition: none; } }

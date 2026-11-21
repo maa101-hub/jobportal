@@ -16,6 +16,13 @@ const STAGE_LABEL = {
 	INTERVIEW: "Interview", SELECTED: "Selected", OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected",
 };
 
+const APPLICATION_STEPS = [
+	{ key: "NEW", label: "Applied" },
+	{ key: "SCREENING", label: "Screening" },
+	{ key: "INTERVIEW", label: "Interview" },
+	{ key: "OFFER", label: "Offer" },
+];
+
 function MyApplications() {
 	const navigate = useNavigate();
 	const toast = useToast();
@@ -146,7 +153,7 @@ function MyApplications() {
 					<button className="ht-btn-ghost" onClick={() => load(true)} disabled={refreshing}>
 						{refreshing ? "Refreshing…" : "Refresh"}
 					</button>
-					<button onClick={() => navigate("/jobs")}>Browse Jobs</button>
+					<button className="myapps-browse-btn" onClick={() => navigate("/jobs")}>Browse Jobs</button>
 				</div>
 			</header>
 
@@ -154,10 +161,10 @@ function MyApplications() {
 
 			{!loading && applications.length > 0 && (
 				<div className="myapps-summary">
-					<div className="myapps-chip"><strong>{counts.total}</strong><span>Total</span></div>
-					<div className="myapps-chip"><strong>{counts.active}</strong><span>Active</span></div>
-					<div className="myapps-chip"><strong>{counts.interview}</strong><span>Interview</span></div>
-					<div className="myapps-chip"><strong>{counts.offer}</strong><span>Offer</span></div>
+					<div className="myapps-chip" style={{ "--i": 0 }}><strong>{counts.total}</strong><span>Total</span></div>
+					<div className="myapps-chip" style={{ "--i": 1 }}><strong>{counts.active}</strong><span>Active</span></div>
+					<div className="myapps-chip" style={{ "--i": 2 }}><strong>{counts.interview}</strong><span>Interview</span></div>
+					<div className="myapps-chip" style={{ "--i": 3 }}><strong>{counts.offer}</strong><span>Offer</span></div>
 				</div>
 			)}
 
@@ -185,9 +192,17 @@ function MyApplications() {
 									<div className="myapp-title">
 										<span className="myapp-appid">Application #{app.id}</span>
 										<h3>{job.title || `Job #${app.jobId}`}</h3>
-										{job.location && <span className="myapp-loc">📍 {job.location}</span>}
+										{job.location && <span className="myapp-loc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>{job.location}</span>}
 									</div>
 									<span className={`ht-pill tone-${STAGE_TONE[stage]}`}>{STAGE_LABEL[stage] || humanize(app.status)}</span>
+								</div>
+
+								<div className="myapp-steps" aria-label={`Application stage: ${STAGE_LABEL[stage] || humanize(app.status)}`}>
+									<div className="myapp-rail"><b style={{ "--progress": Math.min(1, Math.max(0, APPLICATION_STEPS.findIndex((step) => step.key === stage) / (APPLICATION_STEPS.length - 1))) }} /></div>
+									{APPLICATION_STEPS.map((step, stepIndex) => {
+										const currentIndex = APPLICATION_STEPS.findIndex((item) => item.key === stage);
+										return <div key={step.key} className={`myapp-step ${stepIndex < currentIndex ? "is-done" : ""} ${stepIndex === currentIndex ? "is-current" : ""}`}><i />{step.label}</div>;
+									})}
 								</div>
 
 								<div className="myapp-meta">

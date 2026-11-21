@@ -1,0 +1,32 @@
+.ht-datetime {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+	gap: 0.65rem;
+	align-items: center;
+}
+
+.ht-datetime .ht-calendar-trigger {
+	width: 100%;
+}
+
+.ht-time-picker {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(4.8rem, 0.9fr);
+	gap: 0.25rem;
+	align-items: center;
+}
+
+.ht-time-picker .select-trigger {
+	min-height: 3.05rem;
+	padding-inline: 0.6rem;
+	font-weight: 700;
+}
+.ht-time-picker .select-chevron { width: 14px; height: 14px; }
+.ht-time-separator { color: var(--ink-500, #718078); font-weight: 800; }
+
+@media (max-width: 540px) {
+	.ht-datetime {
+		grid-template-columns: 1fr;
+	}
+	.ht-time-picker { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(4.8rem, 0.9fr); }
+}

@@ -9,42 +9,43 @@
 
 :root {
   /* ---- Brand / accent ---------------------------------------------------- */
-  --brand-50:  #eef2ff;
-  --brand-100: #e0e7ff;
-  --brand-200: #c7d2fe;
-  --brand-300: #a5b4fc;
-  --brand-400: #818cf8;
-  --brand-500: #6366f1;
-  --brand-600: #4f46e5;
-  --brand-700: #4338ca;
-  --brand-800: #3730a3;
+  /* Oat milk 60% / forest green 30% / tomato 10% */
+  --brand-50:  #f8f3e9;
+  --brand-100: #eee5d4;
+  --brand-200: #dfcfb5;
+  --brand-300: #c6ad88;
+  --brand-400: #8fa889;
+  --brand-500: #2f604d;
+  --brand-600: #24503e;
+  --brand-700: #1b3d30;
+  --brand-800: #143025;
 
-  --accent-400: #fb923c;
-  --accent-500: #f97316;
+  --accent-400: #f27a5c;
+  --accent-500: #d94b36;
 
   /* ---- Neutral ink & surfaces (light) ------------------------------------ */
-  --ink-900: #0b1220;
-  --ink-800: #111a2e;
-  --ink-700: #1f2a44;
-  --ink-600: #334155;
-  --ink-500: #64748b;
-  --ink-400: #94a3b8;
-  --ink-300: #cbd5e1;
-  --ink-200: #e2e8f0;
-  --ink-100: #eef2f7;
-  --ink-50:  #f6f8fc;
+  --ink-900: #1c2b25;
+  --ink-800: #263a31;
+  --ink-700: #3d5148;
+  --ink-600: #596a61;
+  --ink-500: #718078;
+  --ink-400: #9aa59e;
+  --ink-300: #c8d0c9;
+  --ink-200: #dfe5dd;
+  --ink-100: #edf1e9;
+  --ink-50:  #f5f6ef;
 
-  --surface:        #ffffff;
-  --surface-subtle: #f8fafc;
-  --surface-inset:  #f1f5f9;
-  --app-bg: radial-gradient(1200px 600px at 15% -10%, #eef2ff 0%, transparent 55%),
-            radial-gradient(1000px 620px at 100% 0%, #fef3f0 0%, transparent 50%),
-            linear-gradient(180deg, #f7f8fc 0%, #eef1f8 100%);
+  --surface:        #fffdf8;
+  --surface-subtle: #faf8f1;
+  --surface-inset:  #f1f0e7;
+  --app-bg: radial-gradient(1000px 560px at 10% -15%, #efe4d2 0%, transparent 58%),
+            radial-gradient(900px 520px at 100% 0%, #e5eee4 0%, transparent 54%),
+            linear-gradient(180deg, #f8f5ed 0%, #eef1e9 100%);
 
   /* ---- Semantic ---------------------------------------------------------- */
-  --success-50: #ecfdf5;  --success-500: #10b981; --success-700: #047857;
+  --success-50: #e9f5e8;  --success-500: #2f7d50; --success-700: #205f3b;
   --warning-50: #fffbeb;  --warning-500: #f59e0b; --warning-700: #b45309;
-  --danger-50:  #fef2f2;  --danger-500:  #ef4444; --danger-700:  #b91c1c;
+  --danger-50:  #fff0ed;  --danger-500:  #d94b36; --danger-700:  #a93828;
   --info-50:    #eff6ff;  --info-500:    #3b82f6; --info-700:    #1d4ed8;
 
   /* ---- Typography -------------------------------------------------------- */
@@ -77,8 +78,8 @@
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.07);
   --shadow-md: 0 10px 26px rgba(15, 23, 42, 0.09);
   --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.16);
-  --shadow-brand: 0 14px 30px rgba(79, 70, 229, 0.28);
-  --ring: 0 0 0 4px rgba(99, 102, 241, 0.18);
+  --shadow-brand: 0 14px 30px rgba(36, 80, 62, 0.24);
+  --ring: 0 0 0 4px rgba(47, 96, 77, 0.18);
 
   /* ---- Motion ------------------------------------------------------------ */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -375,3 +376,57 @@ button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shado
 
 /* ---- Stagger helper (set --i on each child) ---------------------------- */
 .ht-stagger { animation: ht-fade-up var(--dur-3) var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms + 60ms); }
+
+/* Shared section header — the reference forest hero used across the workspace. */
+.ht-page-head,
+.jobs-header {
+  position: relative;
+  overflow: hidden;
+  align-items: flex-start;
+  padding: 30px 28px 24px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #2a4632, #1b3025);
+  color: #f4ecdc;
+  box-shadow: 0 16px 34px -22px rgba(25, 52, 36, .65);
+  animation: ht-section-rise .8s var(--ease) both;
+}
+.ht-page-head::before,
+.ht-page-head::after,
+.jobs-header::before,
+.jobs-header::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ht-page-head::before,
+.jobs-header::before { width: 280px; height: 280px; right: -70px; top: -120px; background: rgba(244,236,220,.07); animation: ht-section-drift 9s ease-in-out infinite; }
+.ht-page-head::after,
+.jobs-header::after { width: 170px; height: 170px; left: 38%; bottom: -118px; background: rgba(229,69,45,.14); animation: ht-section-drift 11s ease-in-out infinite reverse; }
+.ht-page-head > *,
+.jobs-header > * { position: relative; z-index: 1; }
+.ht-page-head h2,
+.jobs-header h2 { color: #f4ecdc; font-size: clamp(2rem, 4.5vw, 3.1rem); letter-spacing: -.04em; line-height: 1; }
+.ht-page-head p,
+.jobs-header p { margin-top: 8px; color: rgba(244,236,220,.72); }
+.ht-page-head .ht-page-actions,
+.jobs-header .jobs-count { position: relative; z-index: 1; }
+.ht-page-head .ht-page-actions > button,
+.jobs-header .jobs-count { border-color: transparent; }
+.ht-page-head .ht-page-actions > button:not(.ht-btn-ghost) { background: var(--accent-500); color: #fff; box-shadow: 0 10px 20px -10px var(--accent-500); }
+.ht-page-head .ht-page-actions > button:not(.ht-btn-ghost):hover { background: var(--accent-400); box-shadow: 0 14px 25px -12px var(--accent-500); filter: none; }
+.ht-page-head .ht-page-actions .ht-btn-ghost { background: rgba(244,236,220,.1); border-color: rgba(244,236,220,.25); color: #f4ecdc; box-shadow: none; }
+.ht-page-head .ht-page-actions .ht-btn-ghost:hover { background: rgba(244,236,220,.2); border-color: rgba(244,236,220,.4); color: #fff; }
+.jobs-header { margin-bottom: var(--space-6); }
+.jobs-header .jobs-count { background: rgba(244,236,220,.1); color: #f4ecdc; border-color: rgba(244,236,220,.25); }
+@keyframes ht-section-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ht-section-drift { 50% { transform: translate(-24px, 18px) scale(1.08); } }
+@media (max-width: 640px) {
+  .ht-page-head,
+  .jobs-header { padding: 24px 20px 20px; flex-direction: column; align-items: stretch; }
+  .ht-page-head .ht-page-actions { width: 100%; }
+  .ht-page-head .ht-page-actions > button { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ht-page-head, .jobs-header, .ht-page-head::before, .ht-page-head::after, .jobs-header::before, .jobs-header::after { animation: none; }
+}

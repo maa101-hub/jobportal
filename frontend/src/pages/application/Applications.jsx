@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Applications.css";
+import SelectInput from "../../components/SelectInput/SelectInput";
+import DateTimeInput from "../../components/DateTimeInput/DateTimeInput";
 
 import {
 	getInterviewsByApplication,
@@ -30,6 +32,17 @@ const STAGE_LABEL = {
 	HIRED: "Hired",
 };
 
+const JOURNEY_STAGES = [
+	{ key: "APPLIED", label: "Applied", detail: "Application received and ready for review." },
+	{ key: "SCREENING", label: "Screening", detail: "The application is being reviewed by the hiring team." },
+	{ key: "SHORTLISTED", label: "Shortlisted", detail: "The candidate is shortlisted for interview rounds." },
+	{ key: "INTERVIEW", label: "Interview", detail: "Interview rounds are in progress or completed." },
+	{ key: "SELECTED", label: "Selected", detail: "The candidate cleared the final selection step." },
+	{ key: "OFFERED", label: "Offer sent", detail: "An offer has been released to the candidate." },
+	{ key: "ACCEPTED", label: "Offer accepted", detail: "The candidate accepted the offer." },
+	{ key: "JOINED", label: "Joined", detail: "The candidate has confirmed joining." },
+];
+
 function Applications() {
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -44,6 +57,7 @@ function Applications() {
 	const [actionLoading, setActionLoading] = useState(false);
 	const [searchedJobId, setSearchedJobId] = useState("");
 	const [openAppId, setOpenAppId] = useState(null);
+	const [timelineFocus, setTimelineFocus] = useState(null);
 	const [feedbackForm, setFeedbackForm] = useState({ interviewId: "", feedback: "" });
 
 	// ---- interview round helpers (state machine preserved) ------------------
@@ -88,6 +102,18 @@ function Applications() {
 		if (next === "L2") return "L1 cleared — schedule L2";
 		if (next === "R1") return "L2 cleared — schedule HR (R1)";
 		return "Ready for first round (L1)";
+	};
+
+	const getJourneyProgress = (app, ivs) => {
+		const status = String(app?.status || "").toUpperCase();
+		if (["JOINED", "HIRED"].includes(status)) return 7;
+		if (status === "ACCEPTED") return 6;
+		if (["OFFERED", "OFFER_RELEASED"].includes(status)) return 5;
+		if (status === "SELECTED") return 4;
+		if (ivs?.some((iv) => ["L1", "L2", "R1"].includes(String(iv?.round).toUpperCase()))) return 3;
+		if (status === "SHORTLISTED") return 2;
+		if (["UNDER_REVIEW", "SCREENING"].includes(status)) return 1;
+		return 0;
 	};
 
 	// ---- data ---------------------------------------------------------------
@@ -237,6 +263,8 @@ function Applications() {
 
 	const openApp = applications.find((a) => a.id === openAppId) || null;
 	const openIvs = openApp ? interviewsMap[openApp.id] || [] : [];
+	const journeyIndex = openApp ? getJourneyProgress(openApp, openIvs) : 0;
+	const focusedJourneyIndex = timelineFocus ?? journeyIndex;
 
 	return (
 		<div className="ht-page apps-page">
@@ -295,7 +323,7 @@ function Applications() {
 												key={app.id}
 												className="kanban-card"
 												style={{ "--i": i }}
-												onClick={() => setOpenAppId(app.id)}
+														 onClick={() => { setOpenAppId(app.id); setTimelineFocus(null); }}
 											>
 												<div className="kanban-card-top">
 													<span className="ht-avatar" style={{ width: 34, height: 34, fontSize: "0.75rem" }}>
@@ -320,7 +348,7 @@ function Applications() {
 							<summary>Rejected ({rejected.length})</summary>
 							<div className="apps-rejected-list">
 								{rejected.map((app) => (
-									<button key={app.id} className="apps-rejected-item" onClick={() => setOpenAppId(app.id)}>
+									<button key={app.id} className="apps-rejected-item" onClick={() => { setOpenAppId(app.id); setTimelineFocus(null); }}>
 										<span className="ht-avatar tone-pink" style={{ width: 30, height: 30, fontSize: "0.7rem" }}>{initials(`U${app.userId}`)}</span>
 										Candidate {app.userId} · #{app.id}
 									</button>
@@ -353,6 +381,28 @@ function Applications() {
 								<span>Current stage</span>
 								<span className={`ht-pill tone-${STAGE_TONE[toStage(openApp.status)]}`}>{humanize(openApp.status)}</span>
 							</div>
+							<section className="journey-card" aria-label="Candidate hiring journey">
+								<div className="journey-head">
+									<div><span className="journey-kicker">Hiring journey</span><strong>{JOURNEY_STAGES[focusedJourneyIndex].label}</strong></div>
+									<span className="journey-progress">{Math.round((journeyIndex / (JOURNEY_STAGES.length - 1)) * 100)}% complete</span>
+								</div>
+								<div className="journey-track">
+									<div className="journey-line" style={{ "--progress": `${(journeyIndex / (JOURNEY_STAGES.length - 1)) * 100}%` }} />
+									{JOURNEY_STAGES.map((stage, index) => (
+										<button
+											key={stage.key}
+											className={`journey-step ${index < journeyIndex ? "done" : ""} ${index === journeyIndex ? "current" : ""} ${index === focusedJourneyIndex ? "focused" : ""}`}
+											onClick={() => setTimelineFocus(index)}
+											aria-label={`${stage.label}: ${index <= journeyIndex ? "completed or current" : "upcoming"}`}
+											aria-current={index === journeyIndex ? "step" : undefined}
+										>
+											<span className="journey-node">{index < journeyIndex ? "✓" : index + 1}</span>
+											<span>{stage.label}</span>
+										</button>
+									))}
+								</div>
+								<div className="journey-detail"><span>Stage {focusedJourneyIndex + 1}</span><p>{JOURNEY_STAGES[focusedJourneyIndex].detail}</p></div>
+							</section>
 							<div className="drawer-row">
 								<span>Resume</span>
 								<strong>{openApp.resumeUrl || "Not provided"}</strong>
@@ -381,10 +431,10 @@ function Applications() {
 											<div className="drawer-settled tone-danger">This candidate was rejected.</div>
 											<div className="drawer-feedback">
 												<label htmlFor="rejected-feedback-round">Send interview feedback</label>
-												<select id="rejected-feedback-round" value={feedbackForm.interviewId} onChange={(e) => setFeedbackForm((f) => ({ ...f, interviewId: e.target.value }))}>
+														<SelectInput id="rejected-feedback-round" value={feedbackForm.interviewId} onChange={(e) => setFeedbackForm((f) => ({ ...f, interviewId: e.target.value }))}>
 													<option value="">Select completed round</option>
 													{openIvs.filter(isCompleted).map((iv) => <option key={iv.id} value={iv.id}>{iv.round} - Interview #{iv.id}</option>)}
-												</select>
+														</SelectInput>
 												<textarea rows="3" placeholder="Feedback for the candidate..." value={feedbackForm.feedback} onChange={(e) => setFeedbackForm((f) => ({ ...f, feedback: e.target.value }))} />
 												<button className="ht-btn-ghost" onClick={submitFeedback} disabled={actionLoading}>Send feedback</button>
 											</div>
@@ -406,13 +456,13 @@ function Applications() {
 								return (
 									<div className="drawer-actions">
 										{!beyond && (
-											<button className="ht-btn-success" onClick={() => setStatus(openApp.id, "SHORTLISTED")} disabled={actionLoading}>Shortlist</button>
+											<button className="ht-btn-success drawer-primary-action" onClick={() => setStatus(openApp.id, "SHORTLISTED")} disabled={actionLoading}>Shortlist <span aria-hidden="true">→</span></button>
 										)}
 
 										{beyond && !final && next && (
 											<div className="drawer-schedule">
 												<label>Schedule {next}{next === "R1" ? " (HR)" : ""}</label>
-												<input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} />
+														<DateTimeInput id="application-schedule-at" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} />
 												<button onClick={() => scheduleRound(openApp.id, next, status)} disabled={actionLoading}>Schedule {next}</button>
 											</div>
 										)}
@@ -431,9 +481,9 @@ function Applications() {
 											</div>
 										)}
 
-										<button className="ht-btn-ghost" onClick={() => setStatus(openApp.id, "REJECTED")} disabled={actionLoading}>Reject candidate</button>
+										<button className="ht-btn-ghost drawer-reject-action" onClick={() => setStatus(openApp.id, "REJECTED")} disabled={actionLoading}>Reject candidate</button>
 
-										<button className="ht-btn-ghost" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>
+										<button className="ht-btn-ghost drawer-profile-action" onClick={() => navigate(`/company/candidate/${openApp.userId}?appId=${openApp.id}&jobId=${openApp.jobId ?? searchedJobId}`)}>
 											View full profile
 										</button>
 									</div>

@@ -50,3 +50,64 @@
 
 @media (max-width: 640px) { .ht-page-head { flex-direction: column; align-items: stretch; } }
 @media (prefers-reduced-motion: reduce) { .myoffer-card, .myoffers-skel { animation: none; } }
+
+/* Offer decision surface — aligned with the oat / forest / tomato system. */
+.myoffers-page { max-width: 1100px; }
+.myoffers-count {
+	padding: 0.58rem 0.9rem; background: var(--surface-subtle); color: var(--brand-700);
+	border: 1px solid var(--brand-200); box-shadow: var(--shadow-xs);
+}
+.myoffers-grid { grid-template-columns: minmax(0, 760px); gap: 18px; }
+.myoffer-card {
+	position: relative; overflow: hidden; max-width: 760px; padding: 28px;
+	border-radius: 22px; background: linear-gradient(145deg, var(--surface-subtle), var(--surface) 72%, var(--brand-50));
+	border-color: var(--ink-200); box-shadow: var(--shadow-sm);
+	opacity: 0; transform: translateY(22px) scale(.98);
+	animation: offer-rise .75s var(--ease) .15s forwards;
+	transition: transform .4s var(--ease), box-shadow .3s, border-color .3s;
+}
+.myoffer-card::before { content: ""; position: absolute; top: -62px; right: -34px; width: 180px; height: 180px; border-radius: 50%; background: var(--brand-100); opacity: .48; transition: transform .55s var(--ease); }
+.myoffer-card:hover { transform: translateY(-5px); box-shadow: 0 22px 40px -18px rgba(36,80,62,.34); border-color: var(--brand-200); }
+.myoffer-card:hover::before { transform: scale(1.35); }
+.myoffer-top, .myoffer-facts, .myoffer-note, .myoffer-actions { position: relative; z-index: 1; }
+.myoffer-top { margin-bottom: 22px; }
+.myoffer-appid { letter-spacing: .04em; color: var(--ink-500); }
+.myoffer-top h3 { margin-top: 4px; font-size: clamp(1.65rem, 3vw, 2rem); letter-spacing: -.035em; color: var(--brand-700); }
+.myoffer-top .ht-pill { box-shadow: 0 0 0 4px rgba(223,207,181,.25); }
+.myoffer-top .ht-pill::first-letter { color: var(--brand-600); }
+.myoffer-facts {
+	grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 18px;
+	background: rgba(250,248,241,.78); border-color: var(--brand-200); border-radius: 16px;
+	margin-bottom: 18px;
+}
+.myoffer-facts div { gap: 4px; }
+.myoffer-facts span { letter-spacing: .08em; color: var(--ink-400); }
+.myoffer-facts strong { color: var(--brand-700); font-size: 1rem; font-variant-numeric: tabular-nums; }
+.myoffer-note {
+	position: relative; padding: 16px 18px 16px 46px; margin-bottom: 20px; border-radius: 16px;
+	background: var(--oat-2, var(--surface-subtle)); color: var(--brand-700); border: 1px solid var(--brand-200);
+	font-weight: 600;
+}
+.myoffer-note::before { content: "✓"; position: absolute; left: 17px; top: 50%; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-600); color: #fff; font-size: 12px; font-weight: 800; transform: translateY(-50%); }
+.myoffer-note.tone-teal { background: #f2f7f0; color: var(--brand-700); border-color: var(--brand-200); }
+.myoffer-note.tone-teal::before { background: var(--brand-600); }
+.myoffer-note.tone-green { background: #f2f7f0; color: var(--brand-700); border-color: var(--brand-200); }
+.myoffer-note.tone-green::before { background: var(--brand-600); }
+.myoffer-actions { gap: 10px; }
+.myoffer-actions button { min-height: 52px; border-radius: 15px; font-weight: 750; transition: transform .24s var(--ease), box-shadow .24s var(--ease), background .2s, border-color .2s; }
+.myoffer-actions .ht-btn-success { background: linear-gradient(135deg, var(--brand-500), var(--brand-600)); box-shadow: 0 10px 20px -10px rgba(36,80,62,.6); }
+.myoffer-actions .ht-btn-success:hover { background: linear-gradient(135deg, var(--brand-400), var(--brand-600)); box-shadow: 0 14px 28px -12px rgba(36,80,62,.5); filter: none; transform: translateY(-2px); }
+.myoffer-actions .ht-btn-danger { background: transparent; color: var(--accent-500); border: 1px solid rgba(217,75,54,.35); box-shadow: none; }
+.myoffer-actions .ht-btn-danger:hover { background: var(--accent-50, #fff3ef); border-color: var(--accent-400); color: var(--accent-600); box-shadow: 0 10px 22px -14px rgba(217,75,54,.5); filter: none; transform: translateY(-2px); }
+.myoffer-actions button:active { transform: scale(.97); }
+@keyframes offer-rise { to { opacity: 1; transform: none; } }
+@media (max-width: 640px) {
+	.myoffers-grid { grid-template-columns: 1fr; }
+	.myoffer-card { padding: 20px; }
+	.myoffer-facts { gap: 10px; padding: 14px; }
+	.myoffer-facts strong { font-size: .88rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.myoffer-card { animation: none; opacity: 1; transform: none; }
+	.myoffer-card::before, .myoffer-actions button { transition: none; }
+}

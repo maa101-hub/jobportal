@@ -90,7 +90,7 @@ function CandidateDashboard() {
 		<div className="ht-page cand-dash">
 			<section className="cand-welcome ht-glass">
 				<div className="cand-welcome-copy">
-					<h2>Hi, <span>{displayName}</span> 👋</h2>
+					<h2>Hi, <span>{displayName}</span> <span className="wave" aria-hidden="true">👋</span></h2>
 					<p>Track your applications and offers, and find your next role.</p>
 				</div>
 				<button className="cand-browse-btn" onClick={() => navigate("/jobs")}>
@@ -101,17 +101,17 @@ function CandidateDashboard() {
 			</section>
 
 			<section className="cand-stats">
-				<button className="cand-stat tone-brand" onClick={() => navigate("/my-applications")}>
+				<button className="cand-stat tone-brand" style={{ "--i": 0 }} onClick={() => navigate("/my-applications")}>
 					<span className="cand-stat-icon">{ICONS.apps}</span>
 					<span className="cand-stat-value">{applications.length}</span>
 					<span className="cand-stat-label">Applications</span>
 				</button>
-				<button className="cand-stat tone-teal" onClick={() => navigate("/my-applications")}>
+				<button className="cand-stat tone-teal" style={{ "--i": 1 }} onClick={() => navigate("/my-applications")}>
 					<span className="cand-stat-icon">{ICONS.interview}</span>
 					<span className="cand-stat-value">{interviewCount}</span>
 					<span className="cand-stat-label">In Interview</span>
 				</button>
-				<button className="cand-stat tone-pink" onClick={() => navigate("/my-offers")}>
+				<button className="cand-stat tone-pink" style={{ "--i": 2 }} onClick={() => navigate("/my-offers")}>
 					<span className="cand-stat-icon">{ICONS.offers}</span>
 					<span className="cand-stat-value">{offerCount}</span>
 					<span className="cand-stat-label">Offers</span>

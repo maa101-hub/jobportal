@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import "./OfferManagement.css";
+import CalendarInput from "../../components/CalendarInput/CalendarInput";
+import SelectInput from "../../components/SelectInput/SelectInput";
 
 import { createOffer, getOffer, joinOfferByIdWithDate } from "../../services/endpoints";
 import { applicationService, jobService, userService } from "../../services/api";
@@ -139,15 +141,15 @@ function OfferManagement() {
 
 					<div className="offers-field">
 						<label htmlFor="o-app">Selected candidate</label>
-						<select id="o-app" value={applicationId} onChange={(e) => setApplicationId(e.target.value)} disabled={loadingCandidates || !selectedCandidates.length}>
+						<SelectInput id="o-app" value={applicationId} onChange={(e) => setApplicationId(e.target.value)} disabled={loadingCandidates || !selectedCandidates.length}>
 							<option value="">{loadingCandidates ? "Loading selected candidates…" : selectedCandidates.length ? "Choose a candidate" : "No selected candidates"}</option>
 							{selectedCandidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.candidateName} · Application #{candidate.id} · Job #{candidate.jobId}</option>)}
-						</select>
+						</SelectInput>
 						{selectedCandidates.find((candidate) => String(candidate.id) === String(applicationId))?.candidateEmail && <small className="offers-selected-email">{selectedCandidates.find((candidate) => String(candidate.id) === String(applicationId)).candidateEmail}</small>}
 					</div>
 					<div className="offers-field">
 						<label htmlFor="o-join">Joining date</label>
-						<input id="o-join" type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} />
+						<CalendarInput id="o-join" value={joiningDate} onChange={setJoiningDate} placeholder="Choose joining date" />
 					</div>
 
 					<div className="offers-form-actions">
@@ -192,7 +194,7 @@ function OfferManagement() {
 								<div className="offers-join">
 									<h4>Confirm joining</h4>
 									<div className="offers-join-row">
-										<input type="date" value={joinDateForAccepted} onChange={(e) => setJoinDateForAccepted(e.target.value)} />
+										<CalendarInput value={joinDateForAccepted} onChange={setJoinDateForAccepted} placeholder="Choose joining date" />
 										<button className="ht-btn-success" onClick={markJoined} disabled={busy === "join"}>
 											{busy === "join" ? "Saving…" : "Mark Joined"}
 										</button>

@@ -624,7 +624,7 @@
   padding:clamp(2.5rem,6vw,4rem);border-radius:var(--radius-xl);text-align:center;
   background:radial-gradient(600px 400px at 15% 10%, rgba(129,140,248,0.4), transparent 55%),
              radial-gradient(500px 400px at 90% 90%, rgba(249,115,22,0.25), transparent 50%),
-             linear-gradient(140deg,#312e81 0%,#4338ca 50%,#1e1b4b 100%);
+             linear-gradient(140deg,var(--brand-500) 0%,var(--brand-700) 50%,var(--brand-800) 100%);
   box-shadow:0 30px 60px rgba(49,46,129,0.3);
 }
 .cta-orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;}

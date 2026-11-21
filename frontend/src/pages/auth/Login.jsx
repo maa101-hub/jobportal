@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./auth.css";
 import "./Login.css";
+import SelectInput from "../../components/SelectInput/SelectInput";
 import { useToast } from "../../components/Toast/ToastContext";
 
 import {
@@ -199,33 +200,27 @@ function Login() {
           <form className="auth-form" onSubmit={handleLogin}>
             <div className="auth-field">
               <label htmlFor="login-role">I am a</label>
-              <select
+              <SelectInput
                 id="login-role"
                 value={role}
                 onChange={(e) => {
                   const selectedRole = e.target.value;
                   setRole(selectedRole);
-                  if (selectedRole !== "company") {
-                    setCompanyLoginType("owner");
-                  }
+                  if (selectedRole !== "company") setCompanyLoginType("owner");
                 }}
-              >
-                <option value="candidate">Candidate</option>
-                <option value="company">Company</option>
-              </select>
+                options={[{ value: "candidate", label: "Candidate" }, { value: "company", label: "Company" }]}
+              />
             </div>
 
             {role === "company" && (
               <div className="auth-field">
                 <label htmlFor="login-type">Login as</label>
-                <select
+                <SelectInput
                   id="login-type"
                   value={companyLoginType}
                   onChange={(e) => setCompanyLoginType(e.target.value)}
-                >
-                  <option value="owner">Company Admin</option>
-                  <option value="employee">Company Employee (Delivery / TFG / TAG)</option>
-                </select>
+                  options={[{ value: "owner", label: "Company Admin" }, { value: "employee", label: "Company Employee (Delivery / TFG / TAG)" }]}
+                />
               </div>
             )}
 

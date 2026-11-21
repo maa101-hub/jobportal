@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AddEmployee.css";
+import SelectInput from "../../components/SelectInput/SelectInput";
 import { addEmployee } from "../../services/endpoints";
 import { getCompanyId } from "../../utils/helpers";
 import { TEAM_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from "../../utils/constants";
@@ -28,6 +29,11 @@ function AddTeamMember() {
 	const [message, setMessage] = useState(null); // { type, text }
 
 	const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+	const previewName = form.name.trim() || "Jordan Rivera";
+	const previewInitials = previewName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+	const previewRole = ROLE_LABELS[form.role] || form.role;
+	const previewDescription = ROLE_DESCRIPTIONS[form.role] || "Workflow access across the hiring workspace.";
+	const completedFields = [form.name, form.email, form.phone, form.employeeId, form.location].filter(Boolean).length;
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -87,6 +93,7 @@ function AddTeamMember() {
 				<div className={`addmember-banner ${message.type}`}>{message.text}</div>
 			)}
 
+			<div className="addmember-layout">
 			<form className="addmember-form" onSubmit={handleSubmit}>
 				{/* Identity */}
 				<section className="form-section">
@@ -134,9 +141,7 @@ function AddTeamMember() {
 					<div className="form-grid">
 						<div className="form-field">
 							<label htmlFor="m-dept">Department</label>
-							<select id="m-dept" value={form.department} onChange={set("department")}>
-								{DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-							</select>
+							<SelectInput id="m-dept" value={form.department} onChange={set("department")} options={DEPARTMENTS.map((d) => ({ value: d, label: d }))} />
 						</div>
 						<div className="form-field">
 							<label htmlFor="m-location">Location</label>
@@ -144,10 +149,7 @@ function AddTeamMember() {
 						</div>
 						<div className="form-field">
 							<label htmlFor="m-status">Status</label>
-							<select id="m-status" value={form.status} onChange={set("status")}>
-								<option value="ACTIVE">Active</option>
-								<option value="INACTIVE">Inactive</option>
-							</select>
+							<SelectInput id="m-status" value={form.status} onChange={set("status")} options={[{ value: "ACTIVE", label: "Active" }, { value: "INACTIVE", label: "Inactive" }]} />
 						</div>
 					</div>
 				</section>
@@ -176,6 +178,22 @@ function AddTeamMember() {
 					</div>
 				</div>
 			</form>
+
+			<aside className="addmember-preview" aria-label="Live team member preview">
+				<div className="addmember-preview-card">
+					<span className="addmember-preview-kicker">Live preview</span>
+					<div className="addmember-preview-meter" aria-label={`${completedFields} of 5 profile fields completed`}><b style={{ "--progress": completedFields / 5 }} /></div>
+					<div className="addmember-avatar">{previewInitials}</div>
+					<h3>{previewName}</h3>
+					<span className="addmember-role-badge">{previewRole}</span>
+					<p>{previewDescription}</p>
+					<div className="addmember-preview-line"><span>Email</span><strong>{form.email || "jordan@company.com"}</strong></div>
+					<div className="addmember-preview-line"><span>Department</span><strong>{form.department}</strong></div>
+					<div className="addmember-preview-line"><span>Location</span><strong>{form.location || "Bengaluru, IN"}</strong></div>
+					<div className="addmember-preview-line"><span>Status</span><strong className={form.status === "ACTIVE" ? "is-active" : "is-inactive"}><i />{form.status === "ACTIVE" ? "Active" : "Inactive"}</strong></div>
+				</div>
+			</aside>
+			</div>
 		</div>
 	);
 }

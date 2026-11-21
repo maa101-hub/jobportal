@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./TfgReview.css";
+import LiquidLoader from "../../components/Loading/LiquidLoader";
 
 import { jobService } from "../../services/api";
 import { normalizeList, getUser } from "../../utils/helpers";
@@ -110,19 +111,22 @@ function TfgReview() {
 	return (
 		<div className="ht-page review-page">
 			<header className="ht-page-head">
-				<div>
-					<h2>TFG Review</h2>
-					<p>Review jobs from Delivery and decide what moves to hiring.</p>
+				<div className="review-heading">
+					<div className="review-heading-mark" aria-hidden="true">TR</div>
+					<div>
+						<h2>TFG Review</h2>
+						<p>Review jobs from Delivery and decide what moves to hiring.</p>
+					</div>
 				</div>
 				<div className="ht-page-actions">
-					<span className="review-count">{jobs.length} awaiting review</span>
+					<span className="review-count"><span className="review-count-dot" />{jobs.length} awaiting review</span>
 				</div>
 			</header>
 
 			{toast && <div className={`review-toast ${toast.type}`}>{toast.text}</div>}
 
 			{loading ? (
-				<div className="ht-panel review-loading">Loading review queue…</div>
+				<div className="ht-loading-panel review-loading"><LiquidLoader label="Loading review queue" /></div>
 			) : jobs.length === 0 ? (
 				<div className="ht-empty">
 					<div className="ht-empty-mark" aria-hidden="true" />
@@ -133,6 +137,14 @@ function TfgReview() {
 				<div className="review-layout">
 					{/* Queue list */}
 					<aside className="review-queue">
+						<div className="review-queue-head">
+							<div>
+								<span className="review-queue-label">Decision queue</span>
+								<h3>Incoming roles</h3>
+							</div>
+							<span className="review-queue-total">{jobs.length}</span>
+						</div>
+						<p className="review-queue-note">Select a role to review its brief and make a call.</p>
 						{jobs.map((job, i) => (
 							<button
 								key={job.id}
@@ -150,11 +162,12 @@ function TfgReview() {
 					{selected && (
 						<section className="review-detail ht-panel" key={selected.id}>
 							<div className="review-detail-head">
-								<div>
+								<div className="review-detail-meta">
+									<span className="review-detail-id">Request #{selected.id}</span>
 									<span className="ht-pill tone-amber">Awaiting Review</span>
-									<h3>{selected.title || "Untitled role"}</h3>
-									<p className="review-detail-id">Request #{selected.id}</p>
 								</div>
+								<h3>{selected.title || "Untitled role"}</h3>
+								<p className="review-detail-subtitle">A hiring brief from Delivery, ready for your decision.</p>
 							</div>
 
 							<div className="review-facts">

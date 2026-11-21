@@ -46,7 +46,7 @@
 .cand-stat:active { transform: translateY(-1px) scale(0.99); transition: transform var(--dur-1) ease-out; }
 .cand-stat-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; color: #fff; margin-bottom: var(--space-2); }
 .cand-stat-icon svg { width: 21px; height: 21px; }
-.cand-stat.tone-brand .cand-stat-icon { background: linear-gradient(150deg, #818cf8, #4f46e5); }
+.cand-stat.tone-brand .cand-stat-icon { background: linear-gradient(150deg, var(--brand-400), var(--brand-600)); }
 .cand-stat.tone-teal .cand-stat-icon { background: linear-gradient(150deg, #2dd4bf, #0d9488); }
 .cand-stat.tone-pink .cand-stat-icon { background: linear-gradient(150deg, #f472b6, #db2777); }
 .cand-stat-value { font-family: var(--font-display); font-size: 2rem; line-height: 1; color: var(--ink-900); }
@@ -81,7 +81,7 @@
 .cand-pipe-fill.s0 { background: linear-gradient(90deg, #93c5fd, #3b82f6); }
 .cand-pipe-fill.s1 { background: linear-gradient(90deg, #c4b5fd, #7c3aed); }
 .cand-pipe-fill.s2 { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
-.cand-pipe-fill.s3 { background: linear-gradient(90deg, #818cf8, #4f46e5); }
+.cand-pipe-fill.s3 { background: linear-gradient(90deg, var(--brand-400), var(--brand-600)); }
 .cand-pipe-fill.s4 { background: linear-gradient(90deg, #5eead4, #0d9488); }
 .cand-pipe-fill.s5 { background: linear-gradient(90deg, #f9a8d4, #db2777); }
 .cand-pipe-fill.s6 { background: linear-gradient(90deg, #6ee7b7, #059669); }
@@ -109,3 +109,60 @@
 @media (max-width: 900px) { .cand-lower { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .cand-welcome { flex-direction: column; align-items: flex-start; } .cand-browse-btn { width: 100%; justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .cand-welcome, .cand-stat, .cand-panel, .cand-pipe-row, .cand-pipe-fill, .cand-recent-item, .cand-orb { animation: none; } }
+
+/* Candidate dashboard — the same oat / forest / tomato visual language as Company Dashboard. */
+.cand-dash { max-width: 1180px; }
+.cand-welcome {
+	background:
+		radial-gradient(520px 220px at 88% -30%, rgba(207, 218, 247, 0.68), transparent 62%),
+		radial-gradient(420px 220px at 8% 120%, rgba(223, 207, 181, 0.32), transparent 62%),
+		linear-gradient(120deg, var(--surface-subtle), var(--surface));
+	border-color: var(--ink-200); box-shadow: var(--shadow-sm);
+	animation: candidate-rise 700ms var(--ease) both;
+}
+.cand-welcome-copy { position: relative; z-index: 1; }
+.cand-welcome-copy h2 { color: var(--brand-700); letter-spacing: -0.035em; }
+.cand-welcome-copy h2 span:not(.wave) { color: var(--brand-600); }
+.cand-welcome-copy .wave { display: inline-block; transform-origin: 70% 70%; animation: candidate-wave 2.6s var(--ease) 900ms 2; }
+.cand-welcome-copy p { color: var(--ink-500); }
+.cand-browse-btn {
+	position: relative; overflow: hidden; isolation: isolate; min-height: 44px; padding: 0.72rem 1.1rem; border-radius: 14px;
+	background: var(--brand-600); color: #fff; box-shadow: 0 8px 18px -8px rgba(36, 80, 62, 0.46); font-weight: 750;
+	transition: transform 240ms var(--ease), box-shadow 240ms var(--ease), background 240ms var(--ease);
+}
+.cand-browse-btn::after { content: ""; position: absolute; inset: 0 auto 0 -120%; z-index: -1; width: 70%; background: linear-gradient(105deg, transparent, rgba(255,255,255,.32), transparent); transform: skewX(-18deg); transition: left 500ms var(--ease); }
+.cand-browse-btn:hover { background: var(--brand-500); transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px -10px rgba(36, 80, 62, 0.56); filter: none; }
+.cand-browse-btn:hover::after { left: 140%; }
+.cand-browse-btn:active { transform: scale(.97); }
+.cand-orb { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.92), rgba(207,218,247,.48)); }
+
+.cand-stat {
+	position: relative; overflow: hidden; background: linear-gradient(145deg, var(--surface-subtle), var(--surface) 70%, var(--brand-50));
+	opacity: 0; transform: translateY(18px); animation: candidate-rise 700ms var(--ease) calc(var(--i) * 80ms + 120ms) forwards;
+}
+.cand-stat::after { content: ""; position: absolute; top: -38px; right: -38px; width: 120px; height: 120px; border-radius: 50%; background: var(--brand-100); opacity: .45; transition: transform 500ms var(--ease); }
+.cand-stat:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); filter: none; }
+.cand-stat:hover::after { transform: scale(1.6); }
+.cand-stat-icon { position: relative; z-index: 1; background: var(--brand-600) !important; box-shadow: 0 8px 18px rgba(36,80,62,.24); transition: transform 400ms var(--ease); }
+.cand-stat.tone-pink .cand-stat-icon { background: var(--accent-500) !important; box-shadow: 0 8px 18px rgba(217,75,54,.22); }
+.cand-stat:hover .cand-stat-icon { transform: rotate(-8deg) scale(1.08); }
+.cand-stat-value { font-variant-numeric: tabular-nums; }
+
+.cand-panel { opacity: 0; transform: translateY(16px); animation: candidate-rise 700ms var(--ease) 520ms forwards; }
+.cand-lower .cand-panel:nth-child(2) { animation-delay: 600ms; }
+.cand-pipe-fill { animation: candidate-pipeline-grow 1.1s cubic-bezier(.2,.9,.2,1) both; animation-delay: calc(var(--i) * 90ms + 760ms); }
+.cand-pipe-fill.s0, .cand-pipe-fill.s1 { background: linear-gradient(90deg, var(--brand-300), var(--brand-500)); }
+.cand-pipe-fill.s2, .cand-pipe-fill.s3 { background: linear-gradient(90deg, #a8c39f, var(--brand-500)); }
+.cand-pipe-fill.s4, .cand-pipe-fill.s6 { background: linear-gradient(90deg, #78c7a2, var(--brand-600)); }
+.cand-pipe-fill.s5 { background: linear-gradient(90deg, #f48d78, var(--accent-500)); }
+.cand-recent-item button { background: var(--surface-subtle); border-color: var(--ink-200); transition: background 240ms var(--ease), border-color 240ms var(--ease), transform 240ms var(--ease), box-shadow 240ms var(--ease); }
+.cand-recent-item button:hover { background: var(--surface); border-color: var(--brand-200); transform: translateY(-2px) translateX(2px); box-shadow: var(--shadow-sm); filter: none; }
+.cand-pipeline-empty .ht-empty-mark { animation: candidate-float 3.6s ease-in-out infinite; }
+@keyframes candidate-rise { to { opacity: 1; transform: translateY(0); } }
+@keyframes candidate-pipeline-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes candidate-wave { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 30% { transform: rotate(14deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
+@keyframes candidate-float { 50% { transform: translateY(-8px) rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) {
+	.cand-welcome, .cand-stat, .cand-panel, .cand-pipe-row, .cand-pipe-fill, .cand-recent-item, .cand-orb, .cand-welcome-copy .wave, .cand-pipeline-empty .ht-empty-mark { animation: none; opacity: 1; transform: none; }
+	.cand-stat::after, .cand-stat-icon, .cand-browse-btn, .cand-browse-btn::after, .cand-recent-item button { transition: none; }
+}

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CreateJob.css";
+import CalendarInput from "../../components/CalendarInput/CalendarInput";
+import SelectInput from "../../components/SelectInput/SelectInput";
 
 import { createJob } from "../../services/endpoints";
 import { getCompanyId, getUser } from "../../utils/helpers";
@@ -107,9 +109,7 @@ function CreateJob() {
 						</div>
 						<div className="form-field">
 							<label htmlFor="j-type">Employment type <span className="soon">soon</span></label>
-							<select id="j-type" value={form.employmentType} onChange={set("employmentType")}>
-								{EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-							</select>
+							<SelectInput id="j-type" value={form.employmentType} onChange={set("employmentType")} options={EMPLOYMENT_TYPES.map((t) => ({ value: t, label: t }))} />
 						</div>
 						<div className="form-field">
 							<label htmlFor="j-location">Location</label>
@@ -121,7 +121,7 @@ function CreateJob() {
 						</div>
 						<div className="form-field">
 							<label htmlFor="j-deadline">Application deadline</label>
-							<input id="j-deadline" type="date" value={form.deadline} onChange={set("deadline")} />
+							<CalendarInput id="j-deadline" value={form.deadline} onChange={(value) => set("deadline")({ target: { value } })} placeholder="Choose application deadline" />
 						</div>
 					</div>
 				</section>
