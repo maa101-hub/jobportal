@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Guard from "./Guard";
 
-import Landing from "../pages/Landing";
+import Landing from "../pages/NewLanding";
 import CandidateOffers from "../pages/candidate/CandidateOffers";
 import CompanySignup from "../pages/auth/CompanySignup";
 import Login from "../pages/auth/Login";
