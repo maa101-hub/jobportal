@@ -3,6 +3,8 @@ package com.mphasis.jobpostal.application_service.controller;
 import com.mphasis.jobpostal.application_service.dto.ApplicationRequest;
 import com.mphasis.jobpostal.application_service.entity.Application;
 import com.mphasis.jobpostal.application_service.service.ApplicationService;
+import com.mphasis.jobpostal.application_service.service.ResumeMatchService;
+import com.mphasis.jobpostal.application_service.dto.MatchAnalysisResponse;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -12,12 +14,15 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/applications")
+@SuppressWarnings("null")
 public class ApplicationController {
 
     private final ApplicationService service;
+    private final ResumeMatchService resumeMatchService;
 
-    public ApplicationController(ApplicationService service) {
+    public ApplicationController(ApplicationService service, ResumeMatchService resumeMatchService) {
         this.service = service;
+        this.resumeMatchService = resumeMatchService;
     }
 
     @PostMapping
@@ -27,6 +32,7 @@ public class ApplicationController {
                 AuthContext.requireUserId(httpRequest),
                 request.getJobId(),
                 request.getResumeUrl(),
+                request.getResumeText(),
                 request.getFullName(), request.getEmail(), request.getPhone(),
                 request.getExperience(), request.getEducation(), request.getCoverLetter()
         );
@@ -68,5 +74,14 @@ public class ApplicationController {
     public Application updateStatus(@PathVariable Long id, @RequestParam String status, HttpServletRequest httpRequest) {
         AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
         return service.updateStatus(id, status, AuthContext.requireCompanyId(httpRequest));
+    }
+
+    @GetMapping("/{id}/match")
+    public MatchAnalysisResponse analyzeMatch(@PathVariable Long id, HttpServletRequest httpRequest) {
+        String role = String.valueOf(httpRequest.getAttribute(com.mphasis.hiringtracker.config.JwtAuthFilter.AUTH_ROLE));
+        AuthContext.requireRole(httpRequest, "TAG", "ADMIN");
+        Long companyId = "TAG".equals(role) ? AuthContext.requireCompanyId(httpRequest) : null;
+        MatchAnalysisResponse analysis = resumeMatchService.analyze(id, companyId);
+        return analysis;
     }
 }

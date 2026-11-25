@@ -11,6 +11,7 @@ public class ApplicationRequest {
     private Long jobId;
 
     private String resumeUrl;
+    private String resumeText;
     private String fullName;
     private String email;
     private String phone;
@@ -26,6 +27,8 @@ public class ApplicationRequest {
 
     public String getResumeUrl() { return resumeUrl; }
     public void setResumeUrl(String resumeUrl) { this.resumeUrl = resumeUrl; }
+    public String getResumeText() { return resumeText; }
+    public void setResumeText(String resumeText) { this.resumeText = resumeText; }
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }

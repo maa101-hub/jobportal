@@ -7,6 +7,9 @@ import com.mphasis.jobportal.jobservice.model.JobStatus;
 import com.mphasis.jobportal.jobservice.repo.JobRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.mphasis.jobportal.notification.service.NotificationService;
+import com.mphasis.jobportal.userservice.model.CompanyEmployee;
+import com.mphasis.jobportal.userservice.repo.CompanyEmployeeRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,10 +19,16 @@ public class ApplicationService {
 
     private final ApplicationRepository repository;
     private final JobRepository jobRepository;
+    private final NotificationService notificationService;
+    private final CompanyEmployeeRepository employeeRepository;
 
-    public ApplicationService(ApplicationRepository repository, JobRepository jobRepository) {
+    public ApplicationService(ApplicationRepository repository, JobRepository jobRepository,
+                              NotificationService notificationService,
+                              CompanyEmployeeRepository employeeRepository) {
         this.repository = repository;
         this.jobRepository = jobRepository;
+        this.notificationService = notificationService;
+        this.employeeRepository = employeeRepository;
     }
 
     @Transactional
@@ -30,6 +39,13 @@ public class ApplicationService {
     @Transactional
     public Application apply(Long userId, Long jobId, String resumeUrl, String fullName, String email,
                              String phone, String experience, String education, String coverLetter) {
+        return apply(userId, jobId, resumeUrl, null, fullName, email, phone, experience, education, coverLetter);
+    }
+
+    @Transactional
+    public Application apply(Long userId, Long jobId, String resumeUrl, String resumeText,
+                             String fullName, String email, String phone, String experience,
+                             String education, String coverLetter) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
         if (!(job.getStatus() == JobStatus.APPROVED || job.getStatus() == JobStatus.OPEN)) {
@@ -44,6 +60,7 @@ public class ApplicationService {
         app.setUserId(userId);
         app.setJobId(jobId);
         app.setResumeUrl(resumeUrl);
+        app.setResumeText(resumeText);
         app.setFullName(fullName);
         app.setEmail(email);
         app.setPhone(phone);
@@ -54,7 +71,13 @@ public class ApplicationService {
         app.setAppliedAt(LocalDateTime.now());
         app.setUpdatedAt(LocalDateTime.now());
 
-        return repository.save(app);
+        Application saved = repository.save(app);
+        for (CompanyEmployee employee : employeeRepository.findByCompanyId(job.getCompanyId())) {
+            notificationService.create(employee.getId(), employee.getRole().name(), "NEW_APPLICATION",
+                    "New application received", "A candidate applied for " + job.getTitle(),
+                    "/company/applications?jobId=" + job.getId());
+        }
+        return saved;
     }
 
     public List<Application> getByUser(Long userId) {
@@ -97,7 +120,11 @@ public class ApplicationService {
         app.setStatus(status);
         app.setUpdatedAt(LocalDateTime.now());
 
-        return repository.save(app);
+        Application saved = repository.save(app);
+        notificationService.create(app.getUserId(), "CANDIDATE", "APPLICATION_STATUS",
+                "Application status updated", "Your application is now " + status.replace('_', ' ').toLowerCase(),
+                "/my-applications");
+        return saved;
     }
 
     public Application updateStatus(Long id, String status, Long companyId) {
@@ -106,7 +133,11 @@ public class ApplicationService {
         assertJobCompany(app.getJobId(), companyId);
         app.setStatus(status);
         app.setUpdatedAt(LocalDateTime.now());
-        return repository.save(app);
+        Application saved = repository.save(app);
+        notificationService.create(app.getUserId(), "CANDIDATE", "APPLICATION_STATUS",
+                "Application status updated", "Your application is now " + status.replace('_', ' ').toLowerCase(),
+                "/my-applications");
+        return saved;
     }
 
     private void assertJobCompany(Long jobId, Long companyId) {

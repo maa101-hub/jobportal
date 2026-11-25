@@ -81,6 +81,10 @@ export const getJobApplications = (jobId) => {
   return applicationAPI.get(`/applications/job/${jobId}`); // ✅ FIXED
 };
 
+export const getApplicationMatch = (applicationId) => {
+  return applicationAPI.get(`/applications/${applicationId}/match`);
+};
+
 // Update status
 export const updateApplicationStatus = (id, status) => {
   return applicationAPI.put(
@@ -169,3 +173,12 @@ export const joinOfferByIdWithDate = (offerId, joiningDate) => {
 export const rejectOfferById = (offerId) => {
   return offerAPI.put(`/offers/${offerId}/reject`);
 };
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+export const getNotifications = () => userAPI.get("/notifications");
+export const getUnreadNotificationCount = () => userAPI.get("/notifications/unread-count");
+export const markNotificationRead = (id) => userAPI.put(`/notifications/${id}/read`);
+export const markAllNotificationsRead = () => userAPI.put("/notifications/read-all");

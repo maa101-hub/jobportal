@@ -16,7 +16,7 @@ function Jobs() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [form, setForm] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
-    return { fullName: user?.name || "", email: user?.email || "", phone: "", experience: "", education: "", resumeUrl: "", coverLetter: "" };
+    return { fullName: user?.name || "", email: user?.email || "", phone: "", experience: "", education: "", resumeUrl: "", resumeText: "", coverLetter: "" };
   });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -128,6 +128,7 @@ function Jobs() {
               <label>Experience *<input placeholder="e.g. 3 years" value={form.experience} onChange={updateForm("experience")} required /></label>
               <label>Education *<input placeholder="e.g. B.Tech Computer Science" value={form.education} onChange={updateForm("education")} required /></label>
               <label>Resume link<input value={form.resumeUrl} onChange={updateForm("resumeUrl")} placeholder="https://…" /></label>
+              <label className="application-form-wide">Resume text <span className="form-help">Paste your resume summary so HireTrack can calculate a free match score.</span><textarea rows="5" value={form.resumeText} onChange={updateForm("resumeText")} placeholder="Skills, projects, tools, and achievements..." /></label>
               <label className="application-form-wide">Cover letter<textarea rows="4" value={form.coverLetter} onChange={updateForm("coverLetter")} placeholder="Tell the company why this role is a good fit." /></label>
             </div>
             <div className="application-form-actions"><button type="submit" disabled={submitting}>{submitting ? "Submitting…" : "Submit application"}</button></div>

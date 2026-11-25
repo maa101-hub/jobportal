@@ -7,6 +7,7 @@ import DateTimeInput from "../../components/DateTimeInput/DateTimeInput";
 import {
 	getInterviewsByApplication,
 	getJobApplications,
+	getApplicationMatch,
 	addFeedback,
 	clearInterview,
 	rejectCandidate,
@@ -59,6 +60,8 @@ function Applications() {
 	const [openAppId, setOpenAppId] = useState(null);
 	const [timelineFocus, setTimelineFocus] = useState(null);
 	const [feedbackForm, setFeedbackForm] = useState({ interviewId: "", feedback: "" });
+	const [matchAnalysis, setMatchAnalysis] = useState(null);
+	const [matchLoading, setMatchLoading] = useState(false);
 
 	// ---- interview round helpers (state machine preserved) ------------------
 	const latestRound = (interviews, round) =>
@@ -263,6 +266,21 @@ function Applications() {
 
 	const openApp = applications.find((a) => a.id === openAppId) || null;
 	const openIvs = openApp ? interviewsMap[openApp.id] || [] : [];
+
+	useEffect(() => {
+		let active = true;
+		if (!openAppId) {
+			setMatchAnalysis(null);
+			return undefined;
+		}
+		setMatchLoading(true);
+		getApplicationMatch(openAppId)
+			.then((response) => { if (active) setMatchAnalysis(response.data); })
+			.catch(() => { if (active) setMatchAnalysis(null); })
+			.finally(() => { if (active) setMatchLoading(false); });
+		return () => { active = false; };
+	}, [openAppId]);
+
 	const journeyIndex = openApp ? getJourneyProgress(openApp, openIvs) : 0;
 	const focusedJourneyIndex = timelineFocus ?? journeyIndex;
 
@@ -402,6 +420,19 @@ function Applications() {
 									))}
 								</div>
 								<div className="journey-detail"><span>Stage {focusedJourneyIndex + 1}</span><p>{JOURNEY_STAGES[focusedJourneyIndex].detail}</p></div>
+							</section>
+							<section className="match-card" aria-label="Free resume and job match analysis">
+								<div className="match-card-head">
+									<div><span className="match-kicker">Local matching</span><strong>Resume–job fit</strong></div>
+									{matchAnalysis && <span className="match-score">{matchAnalysis.score}%</span>}
+								</div>
+								{matchLoading ? <p className="match-muted">Analyzing application…</p> : matchAnalysis ? (
+									<>
+										<p className="match-summary">{matchAnalysis.summary}</p>
+										{matchAnalysis.matchedSkills?.length > 0 && <div className="match-skill-group"><span>Matched skills</span><div>{matchAnalysis.matchedSkills.map((skill) => <em key={skill}>{skill}</em>)}</div></div>}
+										{matchAnalysis.missingSkills?.length > 0 && <div className="match-skill-group missing"><span>Skills to review</span><div>{matchAnalysis.missingSkills.map((skill) => <em key={skill}>{skill}</em>)}</div></div>}
+									</>
+								) : <p className="match-muted">Add resume text to the application to calculate a match.</p>}
 							</section>
 							<div className="drawer-row">
 								<span>Resume</span>
